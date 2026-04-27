@@ -1,0 +1,1547 @@
+{
+  "data/life/life_01.jpg": {
+    "scene": "海滩运动",
+    "description": "一群人在沙滩上打排球的场景。沙地上有一个简易网球场，几个人正在积极接发球，远处可以看到海洋和一些其他游客。",
+    "keywords": [
+      "沙滩排球",
+      "海边活动"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 5,
+      "count_category": "一群人",
+      "primary_ethnicity": "亚洲人/黄种人",
+      "facial_expression": "专注"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_02.jpg": {
+    "scene": "海滩度假区",
+    "description": "这张图片展示了一个阳光明媚的海滨沙滩场景，人们正在享受海边活动。前景中有几个人正在进行排球游戏，其中一人正准备接住空中飞来的彩色排球。海水清澈见底，许多人在水中游泳或戏水。远处可以看到一些建筑物和棕榈树，建筑物上有一些标识牌显示了酒店名称‘MIRAMAR’和其他标志性的字样。整体氛围轻松愉快。",
+    "keywords": [
+      "海滩",
+      "排球比赛"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "MIRAMAR"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 5,
+      "count_category": "一群人",
+      "primary_ethnicity": "西方人/白种人",
+      "facial_expression": "专注"
+    },
+    "background_people": "很多",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_03.jpg": {
+    "scene": "夜间旅游景点参观",
+    "description": "这张照片展示了一群人在夜间的传统中式建筑物前拍照的景象。建筑物上有明显的汉字标识‘南天门’和其他装饰性元素，显示出浓厚的历史文化氛围。",
+    "keywords": [
+      "南天门",
+      "中国传统建筑",
+      "游客"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": [
+        "泰山·南天门"
+      ]
+    },
+    "landmark_candidates": [
+      {
+        "name": "泰山·南天门",
+        "confidence": 0.85,
+        "evidence": "图片显示了典型的中国古典风格大门以及上方的文字标志 ‘南天门’ "
+      }
+    ],
+    "ocr_text": [
+      "南天門",
+      "臨俯萬嵩高階"
+    ],
+    "weather": "夜晚",
+    "main_subjects": {
+      "count": 4,
+      "count_category": "一群人",
+      "primary_ethnicity": "亚洲人/黄种人",
+      "facial_expression": "专注"
+    },
+    "background_people": "很多",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [
+        "泰山·南天门"
+      ],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_04.jpg": {
+    "scene": "自然景观+动物特写",
+    "description": "图片展示了一头装饰华丽的驴子站在河边的小路上，背上有绿色绣花布袋，头上戴着红色花朵形状的饰品并挂着黄色流苏。远处是湍急奔腾的河流，河岸上有一些植被覆盖的土地。",
+    "keywords": [
+      "毛驴",
+      "黄河壶口瀑布"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": [
+        "黄河壶口瀑布"
+      ]
+    },
+    "landmark_candidates": [
+      {
+        "name": "黄河壶口瀑布",
+        "confidence": 0.85,
+        "evidence": "河水特征及地貌"
+      }
+    ],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [
+        "黄河壶口瀑布"
+      ],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_05.jpg": {
+    "scene": "古建筑入口",
+    "description": "图片展示了一座传统的中国古典风格的建筑物大门，门楣上装饰有精美的彩绘图案和雕刻纹饰。上方悬挂着一块蓝色匾额，上面写着金色大字‘晋祠胜境’。",
+    "keywords": [
+      "古代建筑",
+      "中国传统艺术"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": [
+        "晋祠庙"
+      ]
+    },
+    "landmark_candidates": [
+      {
+        "name": "晋祠庙",
+        "confidence": 0.85,
+        "evidence": "门口匾额上有'晋祠胜境'字样"
+      }
+    ],
+    "ocr_text": [
+      "晋祠勝境"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [
+        "晋祠庙"
+      ],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_06.jpg": {
+    "scene": "公园休闲区",
+    "description": "这是一张展示一个大型公共绿地的图片，人们正在草地上休息、野餐或散步。远处有高楼大厦林立的城市景观，周围环绕着茂密的树木和绿色植被。阳光明媚，草地呈现出鲜亮的颜色。",
+    "keywords": [
+      "公园",
+      "绿植",
+      "都市风光"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 6,
+      "count_category": "一群人",
+      "primary_ethnicity": "西方人/白种人",
+      "facial_expression": "平静"
+    },
+    "background_people": "很多",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_07.jpg": {
+    "scene": "公园野餐",
+    "description": "这是一张展示人们在绿树成荫的公园里进行野餐的照片。阳光透过树叶洒在地上，营造出温暖而宁静的氛围。几个人坐在草地上休息聊天，旁边有帐篷和其他露营设备。一只狗也在场内活动，增添了生动的气息。",
+    "keywords": [
+      "公园",
+      "野餐",
+      "狗狗"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 8,
+      "count_category": "一群人",
+      "primary_ethnicity": "亚洲人/黄种人",
+      "facial_expression": "开心"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_08.jpg": {
+    "scene": "海滨度假区",
+    "description": "这张图片展示了一个位于海边的休闲区域，前方有一个白色的遮阳伞放置在沙滩上，远处是一片宁静的大海和一个码头平台。平台上有一些人在散步或站立交谈，周围摆放着绿色植物装饰。背景中可以看到一座灯塔以及一些船只停泊于海上。",
+    "keywords": [
+      "海滩",
+      "酒店设施"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "MAJESTIC BARRIERE"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 6,
+      "count_category": "一群人",
+      "primary_ethnicity": "西方人/白种人",
+      "facial_expression": "平静"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_09.jpg": {
+    "scene": "室外校园环境",
+    "description": "图片展示了一个穿着白色POLO衫的机器人站在建筑物前的人行道上，机器人的手臂抬起做出挥手的动作。背景是现代化的教学楼或办公楼，周围有绿化带和蓝天白云。",
+    "keywords": [
+      "机器人",
+      "现代建筑"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_10.jpg": {
+    "scene": "沙滩排球比赛现场",
+    "description": "这张图片展示了一场正在进行的沙滩排球比赛。场地设在一个开阔的城市广场上，沙地上有两名球员正在比赛中，其中一名穿着绿色背心和黑色短裤的男子正准备接发一个白色的排球。网前有一名裁判员站在高台上观察比赛情况。背景中可以看到一些观众和其他参赛者，在远处还有几栋建筑物，包括一座带有尖顶塔楼的历史性建筑。",
+    "keywords": [
+      "沙滩排球",
+      "城市景观"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "I SCREAM ICE CREAM",
+      "DANISH BEACHVOLLEY TOUR",
+      "ALLE VOLLEYSKOLEN",
+      "CRAFT"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 5,
+      "count_category": "一群人",
+      "primary_ethnicity": "西方人/白种人",
+      "facial_expression": "专注"
+    },
+    "background_people": "很多",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_11.jpg": {
+    "scene": "城市道路景观",
+    "description": "这张图片展示了一条弯曲的城市高架桥，两侧种植了大量粉红色的花朵，形成了美丽的花墙效果。道路上有几辆汽车正在行驶，周围是现代化建筑物，环境绿化良好。",
+    "keywords": [
+      "高架桥",
+      "花卉装饰"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 5,
+      "count_category": "多人",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/life/life_12.jpg": {
+    "scene": "都市夜景",
+    "description": "这张图片展示了一个城市的夜间交通景象，主要聚焦于一座现代化的高架桥结构。桥梁设计复杂，有多层交叉的道路布局，周围装饰有绿色植物和照明设施，营造出一种未来感十足的城市氛围。",
+    "keywords": [
+      "高架桥",
+      "现代城市",
+      "夜间街道"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "夜晚",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "model_city": "",
+      "model_landmarks": [],
+      "final_city": "",
+      "final_landmarks": [],
+      "resolver_hits": []
+    }
+  },
+  "data/pet/pet_01.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "猫",
+      "breed": "橘猫",
+      "coat_color": [
+        "橙色",
+        "白色"
+      ],
+      "coat_pattern": "条纹",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "屋顶瓦片上",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "室外庭院",
+    "description": "一只橘黄色猫咪站在黑色屋檐瓦片上，背景是绿色植物和开着红色花朵的树木。 【宠物】品种：橘猫，毛色：橙色, 白色，姿态：站立，动作：无，年龄：成年",
+    "keywords": [
+      "猫咪",
+      "橘猫",
+      "屋顶",
+      "花树",
+      "庭院景色",
+      "猫",
+      "无",
+      "屋顶瓦片上",
+      "站立",
+      "成年",
+      "橙色",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "猫",
+      "breed": "橘猫",
+      "coat_color": [
+        "橙色",
+        "白色"
+      ],
+      "coat_pattern": "条纹",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "屋顶瓦片上",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_02.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "狗",
+      "breed": "秋田犬",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [
+        "帽子"
+      ],
+      "environment": "草丛",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "室外田野",
+    "description": "一只戴着棕色针织帽的秋田犬站在金黄色高高的草地上，背景是蓝天和柔和的日光。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "keywords": [
+      "狗狗",
+      "秋天",
+      "田园风光",
+      "可爱动物",
+      "戴帽子",
+      "狗",
+      "秋田犬",
+      "无",
+      "草丛",
+      "站立",
+      "成年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个",
+      "primary_ethnicity": "无",
+      "facial_expression": "好奇"
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "狗",
+      "breed": "秋田犬",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [
+        "帽子"
+      ],
+      "environment": "草丛",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_03.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "羊",
+      "breed": "未知",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "海边牧场风光",
+    "description": "一只白色的绵羊站在绿色草地上，背景是蔚蓝的大海和陡峭的山峰。 【宠物】品种：未知，毛色：白色，姿态：站立，动作：无，年龄：幼年",
+    "keywords": [
+      "绵羊",
+      "草原",
+      "大海",
+      "山脉",
+      "自然景色",
+      "其他",
+      "无",
+      "草地",
+      "站立",
+      "幼年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "未知",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_04.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "羊羔",
+      "breed": "未知",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "小型",
+      "pose": "站立",
+      "expression": "欢快",
+      "action": "无",
+      "accessories": [
+        "蝴蝶结"
+      ],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "户外田园风光",
+    "description": "一只可爱的白色羊羔站在草地上，戴着黑色花纹的蝴蝶结领饰，背景是蓝天白云和远处的小山丘。 【宠物】品种：未知，毛色：白色，姿态：站立，动作：无，年龄：幼年",
+    "keywords": [
+      "羊羔",
+      "可爱",
+      "草原",
+      "蝴蝶结",
+      "大自然",
+      "其他",
+      "无",
+      "草地",
+      "站立",
+      "幼年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "零星几个",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "未知",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "小型",
+      "pose": "站立",
+      "expression": "欢快",
+      "action": "无",
+      "accessories": [
+        "蝴蝶结"
+      ],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_05.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": [
+        "猫",
+        "狗"
+      ],
+      "breed": [
+        "短毛家猫(未知具体品种)",
+        "柴犬"
+      ],
+      "coat_color": [
+        [
+          "浅棕色",
+          "白色"
+        ],
+        [
+          "米黄色",
+          "奶油色"
+        ]
+      ],
+      "coat_pattern": [
+        "纯色",
+        "渐变色"
+      ],
+      "size": [
+        "小型",
+        "中小型"
+      ],
+      "pose": [
+        "躺下",
+        "坐着"
+      ],
+      "expression": [
+        "放松",
+        "欢快"
+      ],
+      "action": [
+        "无",
+        "张嘴笑"
+      ],
+      "accessories": [
+        [
+          "粉色牵引绳"
+        ]
+      ],
+      "environment": "草地",
+      "interaction": "多宠互动",
+      "count": 2,
+      "occlusion": "无",
+      "life_stage": [
+        "成年",
+        "成年"
+      ]
+    },
+    "scene": "花园草坪区域",
+    "description": "一只猫咪和一条狗狗在花丛旁休息，背景是盛开的粉红色花朵和绿叶植物。 【宠物】品种：['短毛家猫(未知具体品种)', '柴犬']，毛色：浅棕色, 白色, 米黄色, 奶油色，姿态：['躺下', '坐着']，动作：['无', '张嘴笑']，年龄：未知",
+    "keywords": [
+      "猫咪",
+      "狗狗",
+      "柴犬",
+      "花草",
+      "庭院",
+      "萌宠",
+      "其他",
+      "['短毛家猫(未知具体品种)', '柴犬']",
+      "['无', '张嘴笑']",
+      "草地",
+      "['躺下', '坐着']",
+      "浅棕色",
+      "白色",
+      "米黄色",
+      "奶油色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 2,
+      "count_category": "二人组或多动物组合",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "['短毛家猫(未知具体品种)', '柴犬']",
+      "coat_color": [
+        "浅棕色",
+        "白色",
+        "米黄色",
+        "奶油色"
+      ],
+      "coat_pattern": "['纯色', '渐变色']",
+      "size": "['小型', '中小型']",
+      "pose": "['躺下', '坐着']",
+      "expression": "['放松', '欢快']",
+      "action": "['无', '张嘴笑']",
+      "accessories": [
+        "粉色牵引绳"
+      ],
+      "environment": "草地",
+      "interaction": "多宠互动",
+      "count": 2,
+      "occlusion": "无",
+      "life_stage": "未知"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_06.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "狗",
+      "breed": "秋田犬",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "欢快",
+      "action": "无",
+      "accessories": [
+        "草帽"
+      ],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "户外花海背景下的狗狗特写",
+    "description": "一只戴着草帽的白色秋田犬站在黄色油菜花开满的田野里，表情显得非常愉快和满足。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "keywords": [
+      "秋田犬",
+      "草帽",
+      "花朵",
+      "微笑",
+      "田园风光",
+      "狗",
+      "无",
+      "草地",
+      "站立",
+      "成年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "狗",
+      "breed": "秋田犬",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "欢快",
+      "action": "无",
+      "accessories": [
+        "草帽"
+      ],
+      "environment": "草地",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_07.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "鹿",
+      "breed": "梅花鹿",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "斑点",
+      "size": "中小型",
+      "pose": "奔跑",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "溪流边岩石区",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "野外自然环境",
+    "description": "一只带有显著棕白斑纹的小鹿正在清澈的溪水中奔跑，背景是绿色植被和石头。 【宠物】品种：梅花鹿，毛色：棕色, 白色，姿态：奔跑，动作：无，年龄：幼年",
+    "keywords": [
+      "小鹿",
+      "梅花鹿",
+      "溪水",
+      "森林",
+      "野生动物",
+      "其他",
+      "无",
+      "溪流边岩石区",
+      "奔跑",
+      "幼年",
+      "棕色",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "白天清晰天气",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "梅花鹿",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "斑点",
+      "size": "中小型",
+      "pose": "奔跑",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "溪流边岩石区",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_08.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "鹿",
+      "breed": "梅花鹿 (Cervus nippon)",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "条纹状花纹",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "好奇",
+      "action": "无",
+      "accessories": [],
+      "environment": "室外森林区域",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "户外自然环境",
+    "description": "一只年轻的梅花鹿站在樱花树下，背景是盛开的粉色花朵和绿色树木。 【宠物】品种：梅花鹿 (Cervus nippon)，毛色：棕色, 白色，姿态：站立，动作：无，年龄：幼年",
+    "keywords": [
+      "梅花鹿",
+      "野生动物",
+      "春季景色",
+      "樱花",
+      "大自然",
+      "可爱动物",
+      "其他",
+      "梅花鹿 (Cervus nippon)",
+      "无",
+      "室外森林区域",
+      "站立",
+      "幼年",
+      "棕色",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个生物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "梅花鹿 (Cervus nippon)",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "条纹状花纹",
+      "size": "中小型",
+      "pose": "站立",
+      "expression": "好奇",
+      "action": "无",
+      "accessories": [],
+      "environment": "室外森林区域",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_09.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "猫",
+      "breed": "英国短毛猫 (British Shorthair)",
+      "coat_color": [
+        "灰色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "中小型",
+      "pose": "坐着",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "室内背景单一",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "特写肖像照",
+    "description": "一只英短猫咪正对着镜头直视，表情警惕而好奇。 【宠物】品种：英国短毛猫 (British Shorthair)，毛色：灰色, 白色，姿态：坐着，动作：无，年龄：成年",
+    "keywords": [
+      "猫咪",
+      "英短",
+      "灰白相间",
+      "黄色眼睛",
+      "特写照片",
+      "室内拍摄",
+      "猫",
+      "英国短毛猫 (British Shorthair)",
+      "无",
+      "室内背景单一",
+      "坐着",
+      "成年",
+      "灰色",
+      "白色"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      ""
+    ],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "猫",
+      "breed": "英国短毛猫 (British Shorthair)",
+      "coat_color": [
+        "灰色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "中小型",
+      "pose": "坐着",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "室内背景单一",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_10.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "鸟类",
+      "breed": "鹅类（可能是狮头鹅）",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "放松",
+      "action": "无",
+      "accessories": [],
+      "environment": "草地靠近水域边",
+      "interaction": "群聚活动",
+      "count": 5,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "湖畔绿地环境",
+    "description": "五只白色的鹅站在草地上，面向湖泊方向，背景是清澈的水面和绿色植物。 【宠物】品种：鹅类（可能是狮头鹅），毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "keywords": [
+      "鹅",
+      "水岸",
+      "草坪",
+      "宁静景色",
+      "动物摄影",
+      "其他",
+      "鹅类（可能是狮头鹅）",
+      "无",
+      "草地靠近水域边",
+      "站立",
+      "成年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 5,
+      "count_category": "多人或多生物群体",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "鹅类（可能是狮头鹅）",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "放松",
+      "action": "无",
+      "accessories": [],
+      "environment": "草地靠近水域边",
+      "interaction": "群聚活动",
+      "count": 5,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_12.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "猫",
+      "breed": "英国短毛猫 (British Shorthair)",
+      "coat_color": [
+        "灰色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "中小型",
+      "pose": "坐着",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "室内背景单一",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "简洁摄影棚风格",
+    "description": "一只灰白色的猫咪正对着镜头直视，表情认真而警觉。 【宠物】品种：英国短毛猫 (British Shorthair)，毛色：灰色, 白色，姿态：坐着，动作：无，年龄：幼年",
+    "keywords": [
+      "猫咪",
+      "英短",
+      "可爱动物",
+      "萌宠写真",
+      "黑白配色",
+      "特写照片",
+      "猫",
+      "英国短毛猫 (British Shorthair)",
+      "无",
+      "室内背景单一",
+      "坐着",
+      "幼年",
+      "灰色",
+      "白色"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      ""
+    ],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个对象",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "猫",
+      "breed": "英国短毛猫 (British Shorthair)",
+      "coat_color": [
+        "灰色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "中小型",
+      "pose": "坐着",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [],
+      "environment": "室内背景单一",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_13.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色",
+        "黑色"
+      ],
+      "coat_pattern": "三色拼接",
+      "size": "小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "草地上靠近海边",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "室外海滨景色",
+    "description": "一只可爱的比格犬小狗站在一片开满小白花的草地上，背景是清澈的大海和蓝天。 【宠物】品种：比格犬，毛色：棕色, 白色, 黑色，姿态：站立，动作：无，年龄：幼年",
+    "keywords": [
+      "比格犬",
+      "狗狗",
+      "海岸线",
+      "海洋",
+      "花朵",
+      "幼崽",
+      "狗",
+      "无",
+      "草地上靠近海边",
+      "站立",
+      "幼年",
+      "棕色",
+      "白色",
+      "黑色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个动物",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色",
+        "黑色"
+      ],
+      "coat_pattern": "三色拼接",
+      "size": "小型",
+      "pose": "站立",
+      "expression": "警觉",
+      "action": "无",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "草地上靠近海边",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_14.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "鸭子",
+      "breed": "普通家鹅（Pekin Duck）",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "游泳",
+      "expression": "放松",
+      "action": "无",
+      "accessories": [],
+      "environment": "水体环境",
+      "interaction": "独处",
+      "count": 2,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "scene": "公园湖面或池塘边赏花游园景象",
+    "description": "两只白色的鸭子在清澈见底的水中悠闲地漂浮着，周围是盛开的粉色桃花枝条垂挂水面，营造出一种宁静而美丽的春景。 【宠物】品种：普通家鹅（Pekin Duck），毛色：白色，姿态：游泳，动作：无，年龄：成年",
+    "keywords": [
+      "春天",
+      "樱花树",
+      "湖泊",
+      "动物摄影",
+      "鸟类",
+      "休闲时光",
+      "自然风光",
+      "其他",
+      "普通家鹅（Pekin Duck）",
+      "无",
+      "水体环境",
+      "游泳",
+      "成年",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 2,
+      "count_category": "二人及以上",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "其他",
+      "breed": "普通家鹅（Pekin Duck）",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "游泳",
+      "expression": "放松",
+      "action": "无",
+      "accessories": [],
+      "environment": "水体环境",
+      "interaction": "独处",
+      "count": 2,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  },
+  "data/pet/pet_11.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "小型",
+      "pose": "坐着",
+      "expression": "欢快",
+      "action": "嗅花",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "室外夜景花卉旁",
+      "interaction": "被人手持并靠近花朵",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "未知"
+    },
+    "scene": "夜间庭院赏花",
+    "description": "一只可爱的玩具狗狗正用鼻子闻着粉色樱花枝上的花瓣，背景是黑色天空和盛开的粉红色桃花。 【宠物】品种：比格犬，毛色：棕色, 白色，姿态：坐着，动作：嗅花，年龄：未知",
+    "keywords": [
+      "小狗玩偶",
+      "樱花",
+      "夜晚",
+      "可爱动物",
+      "狗",
+      "比格犬",
+      "嗅花",
+      "室外夜景花卉旁",
+      "坐着",
+      "棕色",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "",
+      "landmarks": []
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "夜晚",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单个对象",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "双色",
+      "size": "小型",
+      "pose": "坐着",
+      "expression": "欢快",
+      "action": "嗅花",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "室外夜景花卉旁",
+      "interaction": "被人手持并靠近花朵",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "未知"
+    },
+    "geo_reasoning": {
+      "note": "pet_image_skip_geo"
+    }
+  }
+}

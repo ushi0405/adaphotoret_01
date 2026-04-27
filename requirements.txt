@@ -1,0 +1,6 @@
+streamlit
+sentence_transformers
+faiss-cpu
+jieba
+openai
+dashscope
