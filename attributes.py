@@ -156,10 +156,10 @@ def extract_pet_attributes(text: str) -> Dict[str, List[str]]:
     elif any(w in text for w in ["一群", "多只", "一堆"]):
         attr["count"].append("一群")
 
-    # 年龄
+    # 年龄（加入“成年”！！）
     if any(w in text for w in ["幼年", "幼猫", "幼犬", "幼崽", "baby", "kitten", "puppy"]):
         attr["life_stage"].append("幼年")
-    elif any(w in text for w in ["成年", "adult"]):
+    elif any(w in text for w in ["成年", "adult"]):   # <<< 这里改了
         attr["life_stage"].append("成年")
     elif any(w in text for w in ["老年", "老猫", "老狗", "senior"]):
         attr["life_stage"].append("老年")

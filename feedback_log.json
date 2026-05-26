@@ -1,0 +1,42 @@
+[
+  {
+    "query": "白天在公园野餐的人",
+    "system_best": "data/life/life_06.jpg",
+    "user_best": "data/life/life_07.jpg",
+    "mismatch_reasons": [
+      "entity_keyword_match"
+    ],
+    "comment": "",
+    "timestamp": "2026-04-28T11:12:36.672426"
+  },
+  {
+    "query": "在公园野餐的人",
+    "system_best": "data/life/life_06.jpg",
+    "user_best": "data/life/life_07.jpg",
+    "mismatch_reasons": [
+      "entity_keyword_match"
+    ],
+    "comment": "",
+    "timestamp": "2026-04-28T11:12:59.811639"
+  },
+  {
+    "query": "白天在公园野餐的人",
+    "system_best": "data/life/life_06.jpg",
+    "user_best": "data/life/life_07.jpg",
+    "mismatch_reasons": [
+      "entity_keyword_match"
+    ],
+    "better_reason": "它有更明显的野餐场景",
+    "timestamp": "2026-04-28T11:20:48.334644"
+  },
+  {
+    "query": "在公园野餐的人",
+    "system_best": "data/life/life_06.jpg",
+    "user_best": "data/life/life_07.jpg",
+    "mismatch_reasons": [
+      "entity_keyword_match"
+    ],
+    "better_reason": "它更符合野餐场景",
+    "timestamp": "2026-04-28T11:21:31.056371"
+  }
+]

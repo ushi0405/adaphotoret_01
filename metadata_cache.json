@@ -1,41 +1,48 @@
 {
   "data/life/life_01.jpg": {
-    "scene": "海滩运动",
-    "description": "一群人在沙滩上打排球的场景。沙地上有一个简易网球场，几个人正在积极接发球，远处可以看到海洋和一些其他游客。",
+    "category": "人物",
+    "slots": {},
+    "scene": "沙滩排球场景",
+    "description": "一群人在海边沙地上打沙滩排球，背景有海洋和一些游客。",
     "keywords": [
       "沙滩排球",
-      "海边活动"
+      "海滨活动",
+      "团队运动"
     ],
-    "has_text": false,
+    "has_text": true,
     "image_type": "photo",
     "location": {
       "city": "",
       "landmarks": []
     },
     "landmark_candidates": [],
-    "ocr_text": [],
+    "ocr_text": [
+      ""
+    ],
     "weather": "晴天",
     "main_subjects": {
-      "count": 5,
+      "count": 6,
       "count_category": "一群人",
-      "primary_ethnicity": "亚洲人/黄种人",
+      "primary_ethnicity": "亚洲人",
       "facial_expression": "专注"
     },
     "background_people": "零星几个",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_02.jpg": {
-    "scene": "海滩度假区",
-    "description": "这张图片展示了一个阳光明媚的海滨沙滩场景，人们正在享受海边活动。前景中有几个人正在进行排球游戏，其中一人正准备接住空中飞来的彩色排球。海水清澈见底，许多人在水中游泳或戏水。远处可以看到一些建筑物和棕榈树，建筑物上有一些标识牌显示了酒店名称‘MIRAMAR’和其他标志性的字样。整体氛围轻松愉快。",
+    "category": "人物",
+    "slots": {},
+    "scene": "沙滩和海滨度假区",
+    "description": "这张照片展示了一群人在海边游玩的情景。前景中有几个人在玩排球游戏，背景是一片繁忙的海滩区域，有许多游客正在游泳或享受阳光浴。远处可以看到一些高层酒店建筑物以及棕榈树和其他植被装饰。",
     "keywords": [
       "海滩",
-      "排球比赛"
+      "海浪",
+      "游人",
+      "排球比赛",
+      "热带风光",
+      "休闲娱乐"
     ],
     "has_text": true,
     "image_type": "photo",
@@ -44,132 +51,158 @@
       "landmarks": []
     },
     "landmark_candidates": [],
-    "ocr_text": [
-      "MIRAMAR"
-    ],
+    "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 5,
       "count_category": "一群人",
-      "primary_ethnicity": "西方人/白种人",
-      "facial_expression": "专注"
+      "primary_ethnicity": "混杂人群（包括东方人和西方人）",
+      "facial_expression": "专注于运动活动"
     },
-    "background_people": "很多",
+    "background_people": "很多人",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_03.jpg": {
-    "scene": "夜间旅游景点参观",
-    "description": "这张照片展示了一群人在夜间的传统中式建筑物前拍照的景象。建筑物上有明显的汉字标识‘南天门’和其他装饰性元素，显示出浓厚的历史文化氛围。",
+    "category": "人物",
+    "slots": {},
+    "scene": "夜间旅游景点前的人群聚集地",
+    "description": "这张照片展示了一座传统风格的建筑物南门，门口有多个游客在参观和拍照。背景中的大门上有明显的汉字标识‘南天门’和其他装饰性文字牌匾，显示出浓厚的历史文化氛围。",
     "keywords": [
-      "南天门",
-      "中国传统建筑",
-      "游客"
+      "夜景",
+      "古建筑",
+      "人群",
+      "传统文化",
+      "旅行打卡"
     ],
     "has_text": true,
     "image_type": "photo",
     "location": {
       "city": "",
-      "landmarks": [
-        "泰山·南天门"
-      ]
+      "landmarks": []
     },
     "landmark_candidates": [
-      {
-        "name": "泰山·南天门",
-        "confidence": 0.85,
-        "evidence": "图片显示了典型的中国古典风格大门以及上方的文字标志 ‘南天门’ "
-      }
+      "南天门"
     ],
     "ocr_text": [
       "南天門",
-      "臨俯萬嵩高階"
+      "開關閘臨萬歲嵩高崇嶽之靈臺"
     ],
     "weather": "夜晚",
     "main_subjects": {
-      "count": 4,
-      "count_category": "一群人",
-      "primary_ethnicity": "亚洲人/黄种人",
+      "count": 3,
+      "count_category": "三人",
+      "primary_ethnicity": "亚洲人",
       "facial_expression": "专注"
     },
-    "background_people": "很多",
+    "background_people": "很多人",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [
-        "泰山·南天门"
-      ],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_04.jpg": {
-    "scene": "自然景观+动物特写",
-    "description": "图片展示了一头装饰华丽的驴子站在河边的小路上，背上有绿色绣花布袋，头上戴着红色花朵形状的饰品并挂着黄色流苏。远处是湍急奔腾的河流，河岸上有一些植被覆盖的土地。",
-    "keywords": [
-      "毛驴",
-      "黄河壶口瀑布"
-    ],
-    "has_text": false,
-    "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": [
-        "黄河壶口瀑布"
-      ]
+    "category": "宠物",
+    "slots": {
+      "animal_type": "驴",
+      "breed": "普通驴",
+      "coat_color": [
+        "黑色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "无",
+      "action": "无",
+      "accessories": [
+        "红色花朵装饰",
+        "绿色绣花鞍垫",
+        "黄色绳索缰带",
+        "红底金色文字头饰"
+      ],
+      "environment": "河边石板路旁",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
     },
-    "landmark_candidates": [
-      {
-        "name": "黄河壶口瀑布",
-        "confidence": 0.85,
-        "evidence": "河水特征及地貌"
-      }
+    "scene": "河流边景区",
+    "description": "一只穿着传统节日装扮的驴站在河岸边，背景是一条湍急的河水和远处绿植覆盖的山崖。 【宠物】品种：普通驴，毛色：黑色，姿态：站立，动作：无，年龄：成年",
+    "keywords": [
+      "驴",
+      "节日装束",
+      "黄河",
+      "旅游景点",
+      "普通驴",
+      "无",
+      "河边石板路旁",
+      "站立",
+      "成年",
+      "黑色"
     ],
-    "ocr_text": [],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {},
+    "landmark_candidates": [],
+    "ocr_text": [
+      "壶口苗家"
+    ],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
       "count_category": "单人",
-      "primary_ethnicity": "无",
-      "facial_expression": "无"
+      "primary_ethnicity": "无关",
+      "facial_expression": "无关"
     },
     "background_people": "无",
-    "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [
-        "黄河壶口瀑布"
+    "pet_details": {
+      "animal_type": "驴",
+      "breed": "普通驴",
+      "coat_color": [
+        "黑色"
       ],
-      "resolver_hits": []
+      "coat_pattern": "纯色",
+      "size": "中型",
+      "pose": "站立",
+      "expression": "无",
+      "action": "无",
+      "accessories": [
+        "红色花朵装饰",
+        "绿色绣花鞍垫",
+        "黄色绳索缰带",
+        "红底金色文字头饰"
+      ],
+      "environment": "河边石板路旁",
+      "interaction": "独处",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "成年"
+    },
+    "geo_reasoning": {
+      "source": "none"
     }
   },
   "data/life/life_05.jpg": {
-    "scene": "古建筑入口",
-    "description": "图片展示了一座传统的中国古典风格的建筑物大门，门楣上装饰有精美的彩绘图案和雕刻纹饰。上方悬挂着一块蓝色匾额，上面写着金色大字‘晋祠胜境’。",
+    "category": "风景",
+    "slots": {},
+    "scene": "古建筑园林",
+    "description": "这是一张展示中国传统风格建筑物入口牌坊的画面，顶部有精美的蓝色琉璃瓦和雕刻装饰，中间悬挂着蓝底金字匾额，上书‘晋祠胜境’四个大字。",
     "keywords": [
-      "古代建筑",
-      "中国传统艺术"
+      "传统建筑",
+      "中国风",
+      "古代宫殿",
+      "文化遗址",
+      "石雕门楼",
+      "历史遗迹"
     ],
     "has_text": true,
     "image_type": "photo",
     "location": {
       "city": "",
-      "landmarks": [
-        "晋祠庙"
-      ]
+      "landmarks": []
     },
     "landmark_candidates": [
-      {
-        "name": "晋祠庙",
-        "confidence": 0.85,
-        "evidence": "门口匾额上有'晋祠胜境'字样"
-      }
+      "晋祠"
     ],
     "ocr_text": [
       "晋祠勝境"
@@ -183,54 +216,20 @@
     },
     "background_people": "无",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [
-        "晋祠庙"
-      ],
-      "resolver_hits": []
-    }
-  },
-  "data/life/life_06.jpg": {
-    "scene": "公园休闲区",
-    "description": "这是一张展示一个大型公共绿地的图片，人们正在草地上休息、野餐或散步。远处有高楼大厦林立的城市景观，周围环绕着茂密的树木和绿色植被。阳光明媚，草地呈现出鲜亮的颜色。",
-    "keywords": [
-      "公园",
-      "绿植",
-      "都市风光"
-    ],
-    "has_text": false,
-    "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
-    "landmark_candidates": [],
-    "ocr_text": [],
-    "weather": "晴天",
-    "main_subjects": {
-      "count": 6,
-      "count_category": "一群人",
-      "primary_ethnicity": "西方人/白种人",
-      "facial_expression": "平静"
-    },
-    "background_people": "很多",
-    "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_07.jpg": {
-    "scene": "公园野餐",
-    "description": "这是一张展示人们在绿树成荫的公园里进行野餐的照片。阳光透过树叶洒在地上，营造出温暖而宁静的氛围。几个人坐在草地上休息聊天，旁边有帐篷和其他露营设备。一只狗也在场内活动，增添了生动的气息。",
+    "category": "人物",
+    "slots": {},
+    "scene": "公园野餐区",
+    "description": "一群人在绿草地上进行野餐活动，周围有树木和帐篷，阳光透过树叶洒下温暖光线。",
     "keywords": [
-      "公园",
       "野餐",
-      "狗狗"
+      "草坪",
+      "树荫",
+      "秋景",
+      "多人聚会"
     ],
     "has_text": false,
     "image_type": "photo",
@@ -244,24 +243,25 @@
     "main_subjects": {
       "count": 8,
       "count_category": "一群人",
-      "primary_ethnicity": "亚洲人/黄种人",
+      "primary_ethnicity": "亚洲人",
       "facial_expression": "开心"
     },
     "background_people": "零星几个",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_08.jpg": {
-    "scene": "海滨度假区",
-    "description": "这张图片展示了一个位于海边的休闲区域，前方有一个白色的遮阳伞放置在沙滩上，远处是一片宁静的大海和一个码头平台。平台上有一些人在散步或站立交谈，周围摆放着绿色植物装饰。背景中可以看到一座灯塔以及一些船只停泊于海上。",
+    "category": "风景",
+    "slots": {},
+    "scene": "海滨码头和沙滩景色",
+    "description": "这张照片展示了一个海边的休闲场所，前景是一片沙地上的白色伞状设施，背景是一座木质栈桥平台延伸至海面之上。平台上有一些人在交谈或散步，并摆放着一些植物装饰品。远处可以看到一个灯塔以及蓝色的大海，在阳光下波光粼粼。",
     "keywords": [
-      "海滩",
-      "酒店设施"
+      "海滨",
+      "木制栈道",
+      "灯塔",
+      "大海",
+      "度假氛围"
     ],
     "has_text": true,
     "image_type": "photo",
@@ -271,32 +271,33 @@
     },
     "landmark_candidates": [],
     "ocr_text": [
-      "MAJESTIC BARRIERE"
+      "MAJESTIC BARRIER"
     ],
     "weather": "晴天",
     "main_subjects": {
       "count": 6,
       "count_category": "一群人",
-      "primary_ethnicity": "西方人/白种人",
-      "facial_expression": "平静"
+      "primary_ethnicity": "混杂人群（难以具体区分）",
+      "facial_expression": "无明确表情信息"
     },
-    "background_people": "零星几个",
+    "background_people": "零星几个人在活动",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_09.jpg": {
-    "scene": "室外校园环境",
-    "description": "图片展示了一个穿着白色POLO衫的机器人站在建筑物前的人行道上，机器人的手臂抬起做出挥手的动作。背景是现代化的教学楼或办公楼，周围有绿化带和蓝天白云。",
+    "category": "人物",
+    "slots": {},
+    "scene": "室外广场和建筑物前",
+    "description": "一位穿着白色Polo衫的人物站在现代风格的建筑物前方，背景有蓝天绿地和其他现代化建筑。",
     "keywords": [
-      "机器人",
-      "现代建筑"
+      "机器人外观",
+      "未来科技感",
+      "校园环境",
+      "蓝色天空",
+      "绿色草坪"
     ],
-    "has_text": false,
+    "has_text": true,
     "image_type": "photo",
     "location": {
       "city": "",
@@ -308,24 +309,25 @@
     "main_subjects": {
       "count": 1,
       "count_category": "单人",
-      "primary_ethnicity": "无",
-      "facial_expression": "无"
+      "primary_ethnicity": "无明确种族信息",
+      "facial_expression": "无表情（类似机器人的设计）"
     },
     "background_people": "无",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_10.jpg": {
-    "scene": "沙滩排球比赛现场",
-    "description": "这张图片展示了一场正在进行的沙滩排球比赛。场地设在一个开阔的城市广场上，沙地上有两名球员正在比赛中，其中一名穿着绿色背心和黑色短裤的男子正准备接发一个白色的排球。网前有一名裁判员站在高台上观察比赛情况。背景中可以看到一些观众和其他参赛者，在远处还有几栋建筑物，包括一座带有尖顶塔楼的历史性建筑。",
+    "category": "人物",
+    "slots": {},
+    "scene": "沙滩排球场馆外景",
+    "description": "这张照片展示了一场在沙地上进行的沙滩排球比赛。场地中央有两名球员正在比赛中，其中一名穿着绿色背心和黑色短裤，在准备接球的动作中。背景中有观众和其他参赛者以及裁判员站在网后方观察比赛情况。",
     "keywords": [
       "沙滩排球",
-      "城市景观"
+      "体育赛事",
+      "室外活动",
+      "人群聚集",
+      "建筑物远景"
     ],
     "has_text": true,
     "image_type": "photo",
@@ -342,26 +344,27 @@
     ],
     "weather": "晴天",
     "main_subjects": {
-      "count": 5,
+      "count": 4,
       "count_category": "一群人",
-      "primary_ethnicity": "西方人/白种人",
-      "facial_expression": "专注"
+      "primary_ethnicity": "西方人",
+      "facial_expression": "专注于比赛"
     },
-    "background_people": "很多",
+    "background_people": "很多人",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_11.jpg": {
-    "scene": "城市道路景观",
-    "description": "这张图片展示了一条弯曲的城市高架桥，两侧种植了大量粉红色的花朵，形成了美丽的花墙效果。道路上有几辆汽车正在行驶，周围是现代化建筑物，环境绿化良好。",
+    "category": "风景",
+    "slots": {},
+    "scene": "城市道路绿化带",
+    "description": "这张照片展示了一条弯曲的城市高架路，路边种植了大量的粉红色花朵和绿色藤蔓植物，形成了美丽的花墙效果。道路上有几辆汽车正在行驶，背景中有现代建筑物。",
     "keywords": [
+      "城市风光",
+      "花卉装饰",
       "高架桥",
-      "花卉装饰"
+      "绿植",
+      "车辆通行"
     ],
     "has_text": false,
     "image_type": "photo",
@@ -373,29 +376,30 @@
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
-      "count": 5,
-      "count_category": "多人",
+      "count": 4,
+      "count_category": "一群人",
       "primary_ethnicity": "无",
       "facial_expression": "无"
     },
     "background_people": "无",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/life/life_12.jpg": {
-    "scene": "都市夜景",
-    "description": "这张图片展示了一个城市的夜间交通景象，主要聚焦于一座现代化的高架桥结构。桥梁设计复杂，有多层交叉的道路布局，周围装饰有绿色植物和照明设施，营造出一种未来感十足的城市氛围。",
+    "category": "风景",
+    "slots": {},
+    "scene": "夜间的城市交通和高架桥景色",
+    "description": "这张照片展示了一个城市的夜景，重点是一座现代化的高架桥梁及其下方的道路。高架桥上有绿化带装饰，并有路灯照明，营造出一种现代都市的感觉。道路上有多辆汽车在行驶，显示出繁忙的车流情况。",
     "keywords": [
+      "城市夜景",
       "高架桥",
-      "现代城市",
-      "夜间街道"
+      "道路",
+      "车辆",
+      "绿植",
+      "霓虹灯"
     ],
-    "has_text": false,
+    "has_text": true,
     "image_type": "photo",
     "location": {
       "city": "",
@@ -412,11 +416,7 @@
     },
     "background_people": "无",
     "geo_reasoning": {
-      "model_city": "",
-      "model_landmarks": [],
-      "final_city": "",
-      "final_landmarks": [],
-      "resolver_hits": []
+      "source": "none"
     }
   },
   "data/pet/pet_01.jpg": {
@@ -441,13 +441,13 @@
       "life_stage": "成年"
     },
     "scene": "室外庭院",
-    "description": "一只橘黄色猫咪站在黑色屋檐瓦片上，背景是绿色植物和开着红色花朵的树木。 【宠物】品种：橘猫，毛色：橙色, 白色，姿态：站立，动作：无，年龄：成年",
+    "description": "一只橘黄色猫咪站在黑色屋檐瓦片上，背景是一棵开满红色花朵的大树。 【宠物】品种：橘猫，毛色：橙色, 白色，姿态：站立，动作：无，年龄：成年",
     "keywords": [
       "猫咪",
       "橘猫",
       "屋顶",
-      "花树",
-      "庭院景色",
+      "大树",
+      "红花",
       "猫",
       "无",
       "屋顶瓦片上",
@@ -458,16 +458,13 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
@@ -492,13 +489,13 @@
       "life_stage": "成年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_02.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "狗",
+      "animal_type": "柴犬",
       "breed": "秋田犬",
       "coat_color": [
         "白色"
@@ -517,15 +514,13 @@
       "occlusion": "无",
       "life_stage": "成年"
     },
-    "scene": "室外田野",
-    "description": "一只戴着棕色针织帽的秋田犬站在金黄色高高的草地上，背景是蓝天和柔和的日光。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "scene": "室外自然环境",
+    "description": "一只戴着棕色针织帽的柴犬站在高高的黄色草地上，背景模糊显示天空和远处景致。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
     "keywords": [
+      "柴犬",
       "狗狗",
-      "秋天",
-      "田园风光",
-      "可爱动物",
+      "秋天景色",
       "戴帽子",
-      "狗",
       "秋田犬",
       "无",
       "草丛",
@@ -535,22 +530,19 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个",
-      "primary_ethnicity": "无",
-      "facial_expression": "好奇"
+      "count_category": "单人",
+      "primary_ethnicity": "",
+      "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "狗",
+      "animal_type": "柴犬",
       "breed": "秋田犬",
       "coat_color": [
         "白色"
@@ -570,43 +562,21 @@
       "life_stage": "成年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_03.jpg": {
-    "category": "宠物",
-    "slots": {
-      "animal_type": "羊",
-      "breed": "未知",
-      "coat_color": [
-        "白色"
-      ],
-      "coat_pattern": "纯色",
-      "size": "中小型",
-      "pose": "站立",
-      "expression": "警觉",
-      "action": "无",
-      "accessories": [],
-      "environment": "草地",
-      "interaction": "独处",
-      "count": 1,
-      "occlusion": "无",
-      "life_stage": "幼年"
-    },
+    "category": "风景",
+    "slots": {},
     "scene": "海边牧场风光",
-    "description": "一只白色的绵羊站在绿色草地上，背景是蔚蓝的大海和陡峭的山峰。 【宠物】品种：未知，毛色：白色，姿态：站立，动作：无，年龄：幼年",
+    "description": "这张照片展示了一片宁静的海岸线景色，前景是一块绿油油的草地上有一只白色的绵羊在悠闲地站着。背景中有高耸陡峭的山峰和深蓝色的大海，在蓝天白云下显得格外壮丽。",
     "keywords": [
-      "绵羊",
       "草原",
       "大海",
       "山脉",
-      "自然景色",
-      "其他",
-      "无",
-      "草地",
-      "站立",
-      "幼年",
-      "白色"
+      "绵羊",
+      "自然风光",
+      "岛屿"
     ],
     "has_text": false,
     "image_type": "photo",
@@ -619,37 +589,19 @@
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
-      "primary_ethnicity": "",
-      "facial_expression": ""
+      "count_category": "单人",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
     },
     "background_people": "无",
-    "pet_details": {
-      "animal_type": "其他",
-      "breed": "未知",
-      "coat_color": [
-        "白色"
-      ],
-      "coat_pattern": "纯色",
-      "size": "中小型",
-      "pose": "站立",
-      "expression": "警觉",
-      "action": "无",
-      "accessories": [],
-      "environment": "草地",
-      "interaction": "独处",
-      "count": 1,
-      "occlusion": "无",
-      "life_stage": "幼年"
-    },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_04.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "羊羔",
+      "animal_type": "山羊",
       "breed": "未知",
       "coat_color": [
         "白色"
@@ -669,14 +621,14 @@
       "life_stage": "幼年"
     },
     "scene": "户外田园风光",
-    "description": "一只可爱的白色羊羔站在草地上，戴着黑色花纹的蝴蝶结领饰，背景是蓝天白云和远处的小山丘。 【宠物】品种：未知，毛色：白色，姿态：站立，动作：无，年龄：幼年",
+    "description": "一只可爱的白色小山羊站在草地上，脖子上戴着一个黑色花纹的蝴蝶结，背景有绿色植物和远处山脉。 【宠物】品种：未知，毛色：白色，姿态：站立，动作：无，年龄：幼年",
     "keywords": [
-      "羊羔",
       "可爱",
-      "草原",
-      "蝴蝶结",
+      "小白羊",
+      "花园",
       "大自然",
-      "其他",
+      "萌宠",
+      "山羊",
       "无",
       "草地",
       "站立",
@@ -685,22 +637,19 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "零星几个",
     "pet_details": {
-      "animal_type": "其他",
+      "animal_type": "山羊",
       "breed": "未知",
       "coat_color": [
         "白色"
@@ -720,7 +669,7 @@
       "life_stage": "幼年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_05.jpg": {
@@ -731,7 +680,7 @@
         "狗"
       ],
       "breed": [
-        "短毛家猫(未知具体品种)",
+        "短毛家猫 (Unknown)",
         "柴犬"
       ],
       "coat_color": [
@@ -741,12 +690,12 @@
         ],
         [
           "米黄色",
-          "奶油色"
+          "黑色鼻子和耳朵边缘深色"
         ]
       ],
       "coat_pattern": [
         "纯色",
-        "渐变色"
+        "渐变色带局部深色点缀"
       ],
       "size": [
         "小型",
@@ -762,12 +711,10 @@
       ],
       "action": [
         "无",
-        "张嘴笑"
+        "张嘴笑状"
       ],
       "accessories": [
-        [
-          "粉色牵引绳"
-        ]
+        []
       ],
       "environment": "草地",
       "interaction": "多宠互动",
@@ -779,57 +726,51 @@
       ]
     },
     "scene": "花园草坪区域",
-    "description": "一只猫咪和一条狗狗在花丛旁休息，背景是盛开的粉红色花朵和绿叶植物。 【宠物】品种：['短毛家猫(未知具体品种)', '柴犬']，毛色：浅棕色, 白色, 米黄色, 奶油色，姿态：['躺下', '坐着']，动作：['无', '张嘴笑']，年龄：未知",
+    "description": "一只猫咪躺在草地上休息，旁边是一只微笑的柴犬坐在花丛旁。背景中有粉色花朵盛开。 【宠物】品种：['短毛家猫 (Unknown)', '柴犬']，毛色：浅棕色, 白色, 米黄色, 黑色鼻子和耳朵边缘深色，姿态：['躺下', '坐着']，动作：['无', '张嘴笑状']，年龄：未知",
     "keywords": [
       "猫咪",
-      "狗狗",
       "柴犬",
       "花草",
-      "庭院",
-      "萌宠",
-      "其他",
-      "['短毛家猫(未知具体品种)', '柴犬']",
-      "['无', '张嘴笑']",
+      "笑容",
+      "休闲时光",
+      "['猫', '狗']",
+      "['短毛家猫 (Unknown)', '柴犬']",
+      "['无', '张嘴笑状']",
       "草地",
       "['躺下', '坐着']",
       "浅棕色",
       "白色",
       "米黄色",
-      "奶油色"
+      "黑色鼻子和耳朵边缘深色"
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 2,
-      "count_category": "二人组或多动物组合",
+      "count_category": "两人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "其他",
-      "breed": "['短毛家猫(未知具体品种)', '柴犬']",
+      "animal_type": "['猫', '狗']",
+      "breed": "['短毛家猫 (Unknown)', '柴犬']",
       "coat_color": [
         "浅棕色",
         "白色",
         "米黄色",
-        "奶油色"
+        "黑色鼻子和耳朵边缘深色"
       ],
-      "coat_pattern": "['纯色', '渐变色']",
+      "coat_pattern": "['纯色', '渐变色带局部深色点缀']",
       "size": "['小型', '中小型']",
       "pose": "['躺下', '坐着']",
       "expression": "['放松', '欢快']",
-      "action": "['无', '张嘴笑']",
-      "accessories": [
-        "粉色牵引绳"
-      ],
+      "action": "['无', '张嘴笑状']",
+      "accessories": [],
       "environment": "草地",
       "interaction": "多宠互动",
       "count": 2,
@@ -837,13 +778,13 @@
       "life_stage": "未知"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_06.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "狗",
+      "animal_type": "犬类",
       "breed": "秋田犬",
       "coat_color": [
         "白色"
@@ -862,15 +803,15 @@
       "occlusion": "无",
       "life_stage": "成年"
     },
-    "scene": "户外花海背景下的狗狗特写",
-    "description": "一只戴着草帽的白色秋田犬站在黄色油菜花开满的田野里，表情显得非常愉快和满足。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "scene": "室外花海背景下的狗狗特写",
+    "description": "一只戴着浅棕色草帽的白色秋田犬站在黄色油菜花开满的田野里，表情显得非常愉快和满足。 【宠物】品种：秋田犬，毛色：白色，姿态：站立，动作：无，年龄：成年",
     "keywords": [
       "秋田犬",
       "草帽",
       "花朵",
-      "微笑",
+      "快乐的表情",
       "田园风光",
-      "狗",
+      "犬类",
       "无",
       "草地",
       "站立",
@@ -879,22 +820,19 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "狗",
+      "animal_type": "犬类",
       "breed": "秋田犬",
       "coat_color": [
         "白色"
@@ -914,14 +852,14 @@
       "life_stage": "成年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_07.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "鹿",
-      "breed": "梅花鹿",
+      "animal_type": "梅花鹿",
+      "breed": "未知",
       "coat_color": [
         "棕色",
         "白色"
@@ -939,14 +877,13 @@
       "life_stage": "幼年"
     },
     "scene": "野外自然环境",
-    "description": "一只带有显著棕白斑纹的小鹿正在清澈的溪水中奔跑，背景是绿色植被和石头。 【宠物】品种：梅花鹿，毛色：棕色, 白色，姿态：奔跑，动作：无，年龄：幼年",
+    "description": "一只带有显著棕白斑纹的小梅花鹿正在清澈的溪水中奔跑，背景是一片绿色植被和石头。 【宠物】品种：未知，毛色：棕色, 白色，姿态：奔跑，动作：无，年龄：幼年",
     "keywords": [
-      "小鹿",
       "梅花鹿",
-      "溪水",
-      "森林",
       "野生动物",
-      "其他",
+      "河流",
+      "森林",
+      "幼崽",
       "无",
       "溪流边岩石区",
       "奔跑",
@@ -956,23 +893,20 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
-    "weather": "白天清晰天气",
+    "weather": "白天/晴朗",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "其他",
-      "breed": "梅花鹿",
+      "animal_type": "梅花鹿",
+      "breed": "未知",
       "coat_color": [
         "棕色",
         "白色"
@@ -990,43 +924,40 @@
       "life_stage": "幼年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_08.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "鹿",
-      "breed": "梅花鹿 (Cervus nippon)",
+      "animal_type": "梅花鹿",
+      "breed": "未知",
       "coat_color": [
         "棕色",
         "白色"
       ],
-      "coat_pattern": "条纹状花纹",
+      "coat_pattern": "纯色",
       "size": "中小型",
       "pose": "站立",
       "expression": "好奇",
       "action": "无",
       "accessories": [],
-      "environment": "室外森林区域",
+      "environment": "室外樱花树下",
       "interaction": "独处",
       "count": 1,
       "occlusion": "无",
       "life_stage": "幼年"
     },
     "scene": "户外自然环境",
-    "description": "一只年轻的梅花鹿站在樱花树下，背景是盛开的粉色花朵和绿色树木。 【宠物】品种：梅花鹿 (Cervus nippon)，毛色：棕色, 白色，姿态：站立，动作：无，年龄：幼年",
+    "description": "一只可爱的梅花鹿站在盛开的樱花树前，镜头特写其头部和鼻子的部分细节。 【宠物】品种：未知，毛色：棕色, 白色，姿态：站立，动作：无，年龄：幼年",
     "keywords": [
       "梅花鹿",
-      "野生动物",
-      "春季景色",
       "樱花",
-      "大自然",
-      "可爱动物",
-      "其他",
-      "梅花鹿 (Cervus nippon)",
+      "春天",
+      "可爱",
+      "野生动物",
       "无",
-      "室外森林区域",
+      "室外樱花树下",
       "站立",
       "幼年",
       "棕色",
@@ -1034,51 +965,48 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个生物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "其他",
-      "breed": "梅花鹿 (Cervus nippon)",
+      "animal_type": "梅花鹿",
+      "breed": "未知",
       "coat_color": [
         "棕色",
         "白色"
       ],
-      "coat_pattern": "条纹状花纹",
+      "coat_pattern": "纯色",
       "size": "中小型",
       "pose": "站立",
       "expression": "好奇",
       "action": "无",
       "accessories": [],
-      "environment": "室外森林区域",
+      "environment": "室外樱花树下",
       "interaction": "独处",
       "count": 1,
       "occlusion": "无",
       "life_stage": "幼年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_09.jpg": {
     "category": "宠物",
     "slots": {
       "animal_type": "猫",
-      "breed": "英国短毛猫 (British Shorthair)",
+      "breed": "英国短毛猫",
       "coat_color": [
-        "灰色",
-        "白色"
+        "白色",
+        "灰色"
       ],
       "coat_pattern": "双色",
       "size": "中小型",
@@ -1093,47 +1021,44 @@
       "life_stage": "成年"
     },
     "scene": "特写肖像照",
-    "description": "一只英短猫咪正对着镜头直视，表情警惕而好奇。 【宠物】品种：英国短毛猫 (British Shorthair)，毛色：灰色, 白色，姿态：坐着，动作：无，年龄：成年",
+    "description": "一只英短猫咪正对着镜头直视，表情警惕而好奇。 【宠物】品种：英国短毛猫，毛色：白色, 灰色，姿态：坐着，动作：无，年龄：成年",
     "keywords": [
       "猫咪",
       "英短",
-      "灰白相间",
       "黄色眼睛",
+      "黑白相间皮毛",
       "特写照片",
       "室内拍摄",
       "猫",
-      "英国短毛猫 (British Shorthair)",
+      "英国短毛猫",
       "无",
       "室内背景单一",
       "坐着",
       "成年",
-      "灰色",
-      "白色"
+      "白色",
+      "灰色"
     ],
     "has_text": true,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [
       ""
     ],
-    "weather": "室内灯光",
+    "weather": "室内光线充足",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
       "animal_type": "猫",
-      "breed": "英国短毛猫 (British Shorthair)",
+      "breed": "英国短毛猫",
       "coat_color": [
-        "灰色",
-        "白色"
+        "白色",
+        "灰色"
       ],
       "coat_pattern": "双色",
       "size": "中小型",
@@ -1148,14 +1073,14 @@
       "life_stage": "成年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_10.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "鸟类",
-      "breed": "鹅类（可能是狮头鹅）",
+      "animal_type": "鹅",
+      "breed": "白色家鹅",
       "coat_color": [
         "白色"
       ],
@@ -1165,47 +1090,43 @@
       "expression": "放松",
       "action": "无",
       "accessories": [],
-      "environment": "草地靠近水域边",
+      "environment": "草地",
       "interaction": "群聚活动",
       "count": 5,
       "occlusion": "无",
       "life_stage": "成年"
     },
-    "scene": "湖畔绿地环境",
-    "description": "五只白色的鹅站在草地上，面向湖泊方向，背景是清澈的水面和绿色植物。 【宠物】品种：鹅类（可能是狮头鹅），毛色：白色，姿态：站立，动作：无，年龄：成年",
+    "scene": "湖边草坪",
+    "description": "五只白色的鹅站在绿色草地上，背景是一片宁静的湖泊水面。 【宠物】品种：白色家鹅，毛色：白色，姿态：站立，动作：无，年龄：成年",
     "keywords": [
       "鹅",
       "水岸",
-      "草坪",
-      "宁静景色",
-      "动物摄影",
-      "其他",
-      "鹅类（可能是狮头鹅）",
+      "草原",
+      "鸟类",
+      "休闲",
+      "白色家鹅",
       "无",
-      "草地靠近水域边",
+      "草地",
       "站立",
       "成年",
       "白色"
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 5,
-      "count_category": "多人或多生物群体",
-      "primary_ethnicity": "",
-      "facial_expression": ""
+      "count_category": "一群人",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "其他",
-      "breed": "鹅类（可能是狮头鹅）",
+      "animal_type": "鹅",
+      "breed": "白色家鹅",
       "coat_color": [
         "白色"
       ],
@@ -1215,21 +1136,98 @@
       "expression": "放松",
       "action": "无",
       "accessories": [],
-      "environment": "草地靠近水域边",
+      "environment": "草地",
       "interaction": "群聚活动",
       "count": 5,
       "occlusion": "无",
       "life_stage": "成年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
+    }
+  },
+  "data/pet/pet_11.jpg": {
+    "category": "宠物",
+    "slots": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "小型",
+      "pose": "坐着",
+      "expression": "欢快",
+      "action": "嗅花",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "室外夜景花卉旁",
+      "interaction": "被人抱着并闻花香",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "scene": "夜间庭院赏花",
+    "description": "一只可爱的比格犬玩偶正坐在人的手中，用鼻子靠近一朵粉色花朵仿佛在闻香味。背景中有盛开的粉红色樱花和绿色树叶。 【宠物】品种：比格犬，毛色：棕色, 白色，姿态：坐着，动作：嗅花，年龄：幼年",
+    "keywords": [
+      "狗狗玩具",
+      "比格犬",
+      "樱花",
+      "夜晚",
+      "可爱",
+      "狗",
+      "嗅花",
+      "室外夜景花卉旁",
+      "坐着",
+      "幼年",
+      "棕色",
+      "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {},
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "夜晚",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "",
+      "facial_expression": ""
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "狗",
+      "breed": "比格犬",
+      "coat_color": [
+        "棕色",
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "小型",
+      "pose": "坐着",
+      "expression": "欢快",
+      "action": "嗅花",
+      "accessories": [
+        "项圈"
+      ],
+      "environment": "室外夜景花卉旁",
+      "interaction": "被人抱着并闻花香",
+      "count": 1,
+      "occlusion": "无",
+      "life_stage": "幼年"
+    },
+    "geo_reasoning": {
+      "source": "none"
     }
   },
   "data/pet/pet_12.jpg": {
     "category": "宠物",
     "slots": {
       "animal_type": "猫",
-      "breed": "英国短毛猫 (British Shorthair)",
+      "breed": "英国短毛猫",
       "coat_color": [
         "灰色",
         "白色"
@@ -1246,17 +1244,17 @@
       "occlusion": "无",
       "life_stage": "幼年"
     },
-    "scene": "简洁摄影棚风格",
-    "description": "一只灰白色的猫咪正对着镜头直视，表情认真而警觉。 【宠物】品种：英国短毛猫 (British Shorthair)，毛色：灰色, 白色，姿态：坐着，动作：无，年龄：幼年",
+    "scene": "特写肖像照",
+    "description": "一只灰白色的猫咪正对着镜头，表情认真而警觉。 【宠物】品种：英国短毛猫，毛色：灰色, 白色，姿态：坐着，动作：无，年龄：幼年",
     "keywords": [
       "猫咪",
       "英短",
-      "可爱动物",
-      "萌宠写真",
+      "萌宠",
+      "可爱",
       "黑白配色",
       "特写照片",
       "猫",
-      "英国短毛猫 (British Shorthair)",
+      "英国短毛猫",
       "无",
       "室内背景单一",
       "坐着",
@@ -1266,10 +1264,7 @@
     ],
     "has_text": true,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [
       ""
@@ -1277,14 +1272,14 @@
     "weather": "室内灯光",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个对象",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
       "animal_type": "猫",
-      "breed": "英国短毛猫 (British Shorthair)",
+      "breed": "英国短毛猫",
       "coat_color": [
         "灰色",
         "白色"
@@ -1302,14 +1297,14 @@
       "life_stage": "幼年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_13.jpg": {
     "category": "宠物",
     "slots": {
-      "animal_type": "狗",
-      "breed": "比格犬",
+      "animal_type": "比格犬",
+      "breed": "Beagle (比格)",
       "coat_color": [
         "棕色",
         "白色",
@@ -1330,15 +1325,15 @@
       "life_stage": "幼年"
     },
     "scene": "室外海滨景色",
-    "description": "一只可爱的比格犬小狗站在一片开满小白花的草地上，背景是清澈的大海和蓝天。 【宠物】品种：比格犬，毛色：棕色, 白色, 黑色，姿态：站立，动作：无，年龄：幼年",
+    "description": "一只可爱的比格犬小狗站在一片开满小白花的草地上，背景是一片宁静的大海和蓝天。 【宠物】品种：Beagle (比格)，毛色：棕色, 白色, 黑色，姿态：站立，动作：无，年龄：幼年",
     "keywords": [
       "比格犬",
       "狗狗",
       "海岸线",
       "海洋",
-      "花朵",
-      "幼崽",
-      "狗",
+      "草坪",
+      "可爱",
+      "Beagle (比格)",
       "无",
       "草地上靠近海边",
       "站立",
@@ -1349,23 +1344,20 @@
     ],
     "has_text": false,
     "image_type": "photo",
-    "location": {
-      "city": "",
-      "landmarks": []
-    },
+    "location": {},
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
       "count": 1,
-      "count_category": "单个动物",
+      "count_category": "单人",
       "primary_ethnicity": "",
       "facial_expression": ""
     },
     "background_people": "无",
     "pet_details": {
-      "animal_type": "狗",
-      "breed": "比格犬",
+      "animal_type": "比格犬",
+      "breed": "Beagle (比格)",
       "coat_color": [
         "棕色",
         "白色",
@@ -1386,14 +1378,14 @@
       "life_stage": "幼年"
     },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
   "data/pet/pet_14.jpg": {
     "category": "宠物",
     "slots": {
       "animal_type": "鸭子",
-      "breed": "普通家鹅（Pekin Duck）",
+      "breed": "普通家鹅（可能是模型）",
       "coat_color": [
         "白色"
       ],
@@ -1407,25 +1399,71 @@
       "interaction": "独处",
       "count": 2,
       "occlusion": "无",
-      "life_stage": "成年"
+      "life_stage": "未知"
     },
     "scene": "公园湖面或池塘边赏花游园景象",
-    "description": "两只白色的鸭子在清澈见底的水中悠闲地漂浮着，周围是盛开的粉色桃花枝条垂挂水面，营造出一种宁静而美丽的春景。 【宠物】品种：普通家鹅（Pekin Duck），毛色：白色，姿态：游泳，动作：无，年龄：成年",
+    "description": "两只白色的鸭形雕塑在清澈见底的小溪水中悠然自得地漂浮着，周围有盛开的粉色桃花枝条垂挂下来，营造出一种宁静而美丽的春景氛围。 【宠物】品种：普通家鹅（可能是模型），毛色：白色，姿态：游泳，动作：无，年龄：未知",
     "keywords": [
       "春天",
       "樱花树",
-      "湖泊",
-      "动物摄影",
-      "鸟类",
-      "休闲时光",
-      "自然风光",
-      "其他",
-      "普通家鹅（Pekin Duck）",
+      "水面倒影",
+      "静谧景色",
+      "艺术装置",
+      "人造装饰品",
+      "园林风光",
+      "鸭子",
+      "普通家鹅（可能是模型）",
       "无",
       "水体环境",
       "游泳",
-      "成年",
       "白色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {},
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 2,
+      "count_category": "两人",
+      "primary_ethnicity": "无关",
+      "facial_expression": "无关"
+    },
+    "background_people": "无",
+    "pet_details": {
+      "animal_type": "鸭子",
+      "breed": "普通家鹅（可能是模型）",
+      "coat_color": [
+        "白色"
+      ],
+      "coat_pattern": "纯色",
+      "size": "中小型",
+      "pose": "游泳",
+      "expression": "放松",
+      "action": "无",
+      "accessories": [],
+      "environment": "水体环境",
+      "interaction": "独处",
+      "count": 2,
+      "occlusion": "无",
+      "life_stage": "未知"
+    },
+    "geo_reasoning": {
+      "source": "none"
+    }
+  },
+  "data/life/life_06.jpg": {
+    "category": "风景",
+    "slots": {},
+    "scene": "公园绿地和湖泊景色",
+    "description": "这张照片展示了一个开阔的城市公园景象，绿草如茵，树木繁茂，并有一个宁静的小湖。许多人在草坪上休息、野餐或散步，背景中有高楼大厦可见。",
+    "keywords": [
+      "公园",
+      "绿色植物",
+      "湖泊",
+      "休闲活动",
+      "都市风光"
     ],
     "has_text": false,
     "image_type": "photo",
@@ -1437,111 +1475,991 @@
     "ocr_text": [],
     "weather": "晴天",
     "main_subjects": {
-      "count": 2,
-      "count_category": "二人及以上",
-      "primary_ethnicity": "",
-      "facial_expression": ""
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
     },
-    "background_people": "无",
-    "pet_details": {
-      "animal_type": "其他",
-      "breed": "普通家鹅（Pekin Duck）",
-      "coat_color": [
-        "白色"
-      ],
-      "coat_pattern": "纯色",
-      "size": "中小型",
-      "pose": "游泳",
-      "expression": "放松",
-      "action": "无",
-      "accessories": [],
-      "environment": "水体环境",
-      "interaction": "独处",
-      "count": 2,
-      "occlusion": "无",
-      "life_stage": "成年"
-    },
+    "background_people": "很多人",
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "none"
     }
   },
-  "data/pet/pet_11.jpg": {
-    "category": "宠物",
-    "slots": {
-      "animal_type": "狗",
-      "breed": "比格犬",
-      "coat_color": [
-        "棕色",
-        "白色"
-      ],
-      "coat_pattern": "双色",
-      "size": "小型",
-      "pose": "坐着",
-      "expression": "欢快",
-      "action": "嗅花",
-      "accessories": [
-        "项圈"
-      ],
-      "environment": "室外夜景花卉旁",
-      "interaction": "被人手持并靠近花朵",
-      "count": 1,
-      "occlusion": "无",
-      "life_stage": "未知"
-    },
-    "scene": "夜间庭院赏花",
-    "description": "一只可爱的玩具狗狗正用鼻子闻着粉色樱花枝上的花瓣，背景是黑色天空和盛开的粉红色桃花。 【宠物】品种：比格犬，毛色：棕色, 白色，姿态：坐着，动作：嗅花，年龄：未知",
+  "data/travel/travel_01.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "厨房烹饪环境",
+    "description": "这是一张展示食物特写的照片，主要内容是在一个深棕色锅中的菜肴。菜中有大量的红色辣椒碎和绿色葱花作为装饰，并伴有油亮光泽，表明可能经过高温炒制。",
     "keywords": [
-      "小狗玩偶",
-      "樱花",
-      "夜晚",
-      "可爱动物",
-      "狗",
-      "比格犬",
-      "嗅花",
-      "室外夜景花卉旁",
-      "坐着",
-      "棕色",
-      "白色"
+      "美食",
+      "辣味料理",
+      "红椒",
+      "绿葱",
+      "热锅",
+      "中式菜品"
     ],
     "has_text": false,
     "image_type": "photo",
     "location": {
-      "city": "",
-      "landmarks": []
+      "city": "成都市",
+      "landmarks": [],
+      "gps_latitude": 30.892802777777778,
+      "gps_longitude": 103.60052499999999,
+      "gps_address": "四川省成都市都江堰市青城山镇小鹏汽车充电站(小鹏超充成都青城山豪生国际酒店站)青城道温泉"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_02.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "森林入口标志牌区域",
+    "description": "这张照片展示了一个位于竹林中的景点入口标识，背景是一片茂密的绿色植被和高大的竹子。前景中有黄色的大字标示着地点名字，并伴有绿植装饰。",
+    "keywords": [
+      "竹林",
+      "景区入口",
+      "绿化植物",
+      "大字体标识"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "宜宾市",
+      "landmarks": [],
+      "gps_latitude": 28.486391666666666,
+      "gps_longitude": 104.98233888888889,
+      "gps_address": "四川省宜宾市长宁县竹海镇双黄桷"
+    },
+    "landmark_candidates": [
+      {
+        "name": "",
+        "confidence": ""
+      }
+    ],
+    "ocr_text": [
+      "朝龙坞"
+    ],
+    "weather": "阴天或多云",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_03.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "瀑布景区",
+    "description": "两个人站在一个有多个水帘状瀑布的观景台上合影，背景中有茂密的绿色植被和竹林。",
+    "keywords": [
+      "情侣合照",
+      "瀑布",
+      "自然风光",
+      "旅游景点"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "宜宾市",
+      "landmarks": [],
+      "gps_latitude": 28.49377777777778,
+      "gps_longitude": 105.03183055555556,
+      "gps_address": "四川省宜宾市长宁县竹海镇大梯岩蜀南竹海"
+    },
+    "landmark_candidates": [
+      {
+        "name": "",
+        "confidence": ""
+      }
+    ],
+    "ocr_text": [
+      "禁止翻越 No Crossing",
+      "当心滑 Caution Slippery"
+    ],
+    "weather": "阴天或多云",
+    "main_subjects": {
+      "count": 2,
+      "count_category": "两人",
+      "primary_ethnicity": "亚洲人",
+      "facial_expression": "开心"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_04.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "瀑布景色",
+    "description": "这是一张黑白照片，展示了一道从高处倾泻而下的瀑布景象。水流湍急，在空中形成细密的水雾和飞溅的效果，并在底部撞击岩石产生白色浪花。周围有绿色植物点缀，环境显得宁静而又充满力量。",
+    "keywords": [
+      "瀑布",
+      "流水",
+      "自然风光",
+      "黑色与白色对比"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "宜宾市",
+      "landmarks": [],
+      "gps_latitude": 28.49388888888889,
+      "gps_longitude": 105.03213611111111,
+      "gps_address": "四川省宜宾市长宁县竹海镇大梯岩蜀南竹海"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "不确定",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_05.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "餐桌环境",
+    "description": "一碗热气腾腾的食物，汤底呈深棕色，里面有煮鸡蛋、蔬菜（可能是白菜和香菜）、豆腐皮和其他食材。",
+    "keywords": [
+      "食物",
+      "面条类菜肴",
+      "炖蛋",
+      "绿色蔬菜",
+      "豆制品"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.08966111111111,
+      "gps_longitude": 113.29003888888889,
+      "gps_address": "山西省大同市平城区古城街道魏都大道大同古城城墙外带状公园"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_06.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "餐厅餐桌",
+    "description": "这张照片展示了一桌中式菜肴，包括烤鸭片、蔬菜沙拉配西瓜块、炸茄子和酥脆肉串。",
+    "keywords": [
+      "美食",
+      "中式料理",
+      "烤鸭",
+      "炒菜",
+      "水果拼盘",
+      "油炸食品"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.10505555555556,
+      "gps_longitude": 113.2930361111111,
+      "gps_address": "山西省大同市平城区武定街道魏都大道985号雁运家属院"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 4,
+      "count_category": "一群人",
+      "primary_ethnicity": "无关",
+      "facial_expression": "无关"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_07.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "室外园林景区",
+    "description": "这张照片展示了一个在下雨天气中的古典园林景象。前景中有木质长椅和围栏，地面湿润反光，显示出正在下着大雨。背景是一些古建筑的一部分，屋顶有典型的中式飞檐设计，并正在进行修缮工作。周围有许多绿树环绕，环境显得宁静而幽雅。",
+    "keywords": [
+      "雨景",
+      "古代建筑",
+      "庭院",
+      "树木",
+      "湿漉漉的道路"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.08545,
+      "gps_longitude": 113.29400555555556,
+      "gps_address": "山西省大同市平城区古城街道永泰门内街大同古城城墙外带状公园"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "雨天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_08.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "古建筑庭院",
+    "description": "这张照片展示了一座传统的中式古代建筑物的一部分和一棵松树的部分枝叶。背景中的天空显得有些灰暗，可能是下雨天气。",
+    "keywords": [
+      "中国古代建筑",
+      "传统木构架",
+      "飞檐翘角",
+      "青瓦红墙",
+      "松树枝干",
+      "雨水滴答"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.08587777777778,
+      "gps_longitude": 113.29335833333333,
+      "gps_address": "山西省大同市平城区古城街道永泰门内街大同古城墙"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "雨天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_09.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "餐厅餐桌环境",
+    "description": "一张展示食物的照片，上方是一盘方形的食物块状甜品，表面有糖浆覆盖并反射光线；下方是一个蒸笼装着几颗褶皱丰富的包子。",
+    "keywords": [
+      "美食",
+      "中式糕点",
+      "包子",
+      "木桌餐桌上菜"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.087336111111114,
+      "gps_longitude": 113.28623333333333,
+      "gps_address": "山西省大同市平城区迎宾街道迎泽南街幸福里小区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      ""
+    ],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_10.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "餐桌环境",
+    "description": "一张展示食物的特写照片，碗内装有类似豆腐脑的食物，并淋上了红油和调料汁，上面点缀着黄瓜丝和其他配料。",
+    "keywords": [
+      "美食",
+      "小吃",
+      "豆腐脑",
+      "辣椒酱",
+      "调味品"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "大同市",
+      "landmarks": [],
+      "gps_latitude": 40.088344444444445,
+      "gps_longitude": 113.2909,
+      "gps_address": "山西省大同市平城区古城街道教场街大同古城城墙外带状公园"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内光线充足但未明确天气情况",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无关",
+      "facial_expression": "无关"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_11.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展览室",
+    "description": "展示了一件青铜文物，具有复杂的纹饰和兽面造型设计。",
+    "keywords": [
+      "青铜器",
+      "古代艺术品",
+      "博物馆展品"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.86512777777778,
+      "gps_longitude": 112.52514722222222,
+      "gps_address": "山西省太原市万柏林区千峰街道运城羊汤馆太原理工大学(迎西校区)"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "无关",
+      "facial_expression": "无关"
+    },
+    "background_people": "零星几个人影",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_12.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展品展示背景",
+    "description": "这是一组古代陶俑骑马雕塑，展示了两位身穿古装的人物分别坐在两匹马上。人物和马都经过彩绘处理，呈现出历史文物的特点。",
+    "keywords": [
+      "陶瓷雕像",
+      "唐代风格",
+      "骑马俑",
+      "中国古代艺术"
+    ],
+    "has_text": false,
+    "image_type": "实物照片",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.86523888888889,
+      "gps_longitude": 112.52423888888889,
+      "gps_address": "山西省太原市万柏林区千峰街道玉门河南沿岸太原理工大学(迎西校区)"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内光线充足环境",
+    "main_subjects": {
+      "count": 4,
+      "count_category": "一群人",
+      "primary_ethnicity": "东方文化元素显著的人群形象",
+      "facial_expression": "静态表情"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_13.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展品展示环境",
+    "description": "这是一尊古代陶制骑马俑雕塑，描绘了一位身穿盔甲的人物正在策马上前的姿态。",
+    "keywords": [
+      "陶瓷雕像",
+      "历史文物",
+      "唐代风格",
+      "骑兵形象"
+    ],
+    "has_text": false,
+    "image_type": "实物照片",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.86520277777778,
+      "gps_longitude": 112.52419166666667,
+      "gps_address": "山西省太原市万柏林区千峰街道玉门河南沿岸太原理工大学(迎西校区)"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内光线充足",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "东方文化背景下的艺术表现形式",
+      "facial_expression": "庄重肃穆"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_14.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展品展示区",
+    "description": "一组古代陶俑雕塑摆放在展台上，背景墙上投射出它们的阴影。这些陶俑穿着统一的衣服和头饰，姿态各异，似乎在表演某种活动。",
+    "keywords": [
+      "古董",
+      "陶瓷雕像",
+      "历史文物",
+      "展览馆",
+      "中国古代艺术"
+    ],
+    "has_text": false,
+    "image_type": "照片",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.86516944444445,
+      "gps_longitude": 112.524125,
+      "gps_address": "山西省太原市万柏林区千峰街道玉门河南沿岸太原理工大学(迎西校区)"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内光线充足",
+    "main_subjects": {
+      "count": 7,
+      "count_category": "一群人",
+      "primary_ethnicity": "东方人",
+      "facial_expression": "静态表情（雕刻表现）"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_15.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展品展示柜内",
+    "description": "两张陶俑雕像并排摆放，表面有红色和灰色颜料痕迹，头部戴冠饰，双手交叉置于胸前。",
+    "keywords": [
+      "古代雕塑",
+      "陶瓷艺术",
+      "历史文物",
+      "考古发现"
+    ],
+    "has_text": false,
+    "image_type": "实物照片",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.86511111111111,
+      "gps_longitude": 112.52406388888889,
+      "gps_address": "山西省太原市万柏林区千峰街道太原理工大学迎西校区(北门)太原理工大学(迎西校区)"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内光线充足",
+    "main_subjects": {
+      "count": 2,
+      "count_category": "两人",
+      "primary_ethnicity": "东方文化风格",
+      "facial_expression": "表情模糊但庄重肃穆"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_16.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "博物馆展览室",
+    "description": "这是一尊古代石雕头像艺术品，展示在一个展台上。雕像头部装饰有复杂的冠饰和卷曲花纹，表情宁静祥和，闭目微笑，具有浓厚的历史文化气息。",
+    "keywords": [
+      "古雕塑",
+      "佛教艺术",
+      "历史文物",
+      "宗教雕刻"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.865211111111115,
+      "gps_longitude": 112.52526944444445,
+      "gps_address": "山西省太原市万柏林区千峰街道玉门河南沿岸后北屯玉河小区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "无适用分类",
+      "facial_expression": "平静"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_17.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "古建筑庭院入口",
+    "description": "这张照片展示了一座传统的中国古典园林风格的大门牌坊，上方有精美的彩绘和雕刻装饰。匾额上写着金色大字‘晋祠胜境’，周围环境绿树环绕。",
+    "keywords": [
+      "古代建筑",
+      "中国传统建筑",
+      "大门牌坊",
+      "晋祠胜境",
+      "青瓦飞檐",
+      "中式园林"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.703725000000006,
+      "gps_longitude": 112.44422222222222,
+      "gps_address": "山西省太原市晋源区晋祠镇崇宁路晋祠天龙山景区"
+    },
+    "landmark_candidates": [
+      "晋祠"
+    ],
+    "ocr_text": [
+      "晋祠胜境"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_18.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "室外园林古迹",
+    "description": "这张照片展示了一座传统的中式建筑物的一部分，屋顶覆盖着灰色瓦片，并带有典型的飞檐设计。前景中有茂密的松树和其他绿色植物环绕，显示出一种宁静而古老的氛围。",
+    "keywords": [
+      "传统建筑",
+      "中国风",
+      "庭院",
+      "树木",
+      "蓝天白云"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.70479166666667,
+      "gps_longitude": 112.44213055555556,
+      "gps_address": "山西省太原市晋源区晋祠镇文萃路太原市晋源区晋祠镇第一中学"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "唐园"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_19.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "古建筑庭院",
+    "description": "这张照片展示了一座传统的中式古代建筑物的一部分，具有典型的飞檐翘角和精美的木雕装饰。屋顶覆盖着深蓝色瓦片，屋脊上有复杂的雕刻图案。柱子涂有红色油漆，并带有金色细节，显示出浓厚的历史文化气息。",
+    "keywords": [
+      "中国古代建筑",
+      "传统风格",
+      "木质结构",
+      "飞檐斗拱",
+      "历史遗迹"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.70809166666667,
+      "gps_longitude": 112.4355388888889,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_20.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "历史古迹景区",
+    "description": "这张照片展示了一座传统的中式古典建筑，具有典型的飞檐翘角和彩绘装饰风格。前景中有红色护栏围起的部分区域，并放置了两尊石雕武士像作为守卫雕塑。背景有茂密的树木和其他游客在参观游览。",
+    "keywords": [
+      "传统建筑",
+      "古代庙宇",
+      "红栏杆",
+      "雕像守护者",
+      "历史文化遗址"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.708397222222224,
+      "gps_longitude": 112.43530277777778,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "西游打卡处"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 3,
+      "count_category": "三人",
+      "primary_ethnicity": "无明确种族区分（主要是建筑物及环境元素）",
+      "facial_expression": "无关紧要（非以人为主）"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_21.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "古建细节特写",
+    "description": "这张照片展示了一座古代建筑物的部分木构架和装饰元素。可以看到雕刻精美的木质构件，包括斗拱、梁柱以及一些彩绘牌匾。其中一块牌子上写着‘福’字和其他文字，周围有复杂的纹饰图案。",
+    "keywords": [
+      "中国古代建筑",
+      "斗拱",
+      "雕花木材",
+      "传统工艺",
+      "文化遗址"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.708755555555555,
+      "gps_longitude": 112.43480000000001,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "福"
+    ],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_22.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "古建筑内部",
+    "description": "这张照片展示了一座传统中式建筑物的一部分，特别是门楣上的牌匾和周围的装饰细节。牌匾上写着金色的大字‘显圣济世’，周围有精美的彩绘边框。背景中有木质梁架和其他传统的木制构件。",
+    "keywords": [
+      "古代建筑",
+      "中国传统建筑",
+      "牌匾",
+      "显圣济世",
+      "木材雕刻",
+      "文化遗址"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.708644444444445,
+      "gps_longitude": 112.43475277777779,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [
+      "顯聖濟世"
+    ],
+    "weather": "室内光线充足但具体天气不明",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_23.HEIC": {
+    "category": "人物",
+    "slots": {},
+    "scene": "宗教文化场所内雕像展示区",
+    "description": "一张石雕武士像的照片，雕塑手持长棍，身穿铠甲，表情威严。背景有传统木构架和栏杆围护。",
+    "keywords": [
+      "石雕",
+      "武术士",
+      "寺庙",
+      "传统文化"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.708758333333336,
+      "gps_longitude": 112.43483611111111,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [
+      {
+        "name": "",
+        "confidence_score": ""
+      }
+    ],
+    "ocr_text": [
+      "西游打卡处",
+      "温馨提示:86版《西游记》此兄谢绝拍照"
+    ],
+    "weather": "白天光线充足但具体天气不明确",
+    "main_subjects": {
+      "count": 1,
+      "count_category": "单人",
+      "primary_ethnicity": "无适用性（非真人）",
+      "facial_expression": "严肃"
+    },
+    "background_people": "无可见人群",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_24.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "室外公园或古迹庭院",
+    "description": "这张照片展示了两棵大树从低角度仰视拍摄的画面，树干粗壮弯曲，树叶茂密翠绿，背景是一片蓝天和更多的树木。",
+    "keywords": [
+      "大树",
+      "俯拍视角",
+      "绿色植被",
+      "天空"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "太原市",
+      "landmarks": [],
+      "gps_latitude": 37.70896944444445,
+      "gps_longitude": 112.43482222222222,
+      "gps_address": "山西省太原市晋源区晋祠镇天龙山公路晋祠天龙山景区"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "晴天",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_25.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "餐厅内部",
+    "description": "一张火锅餐桌上的食物照片，中央是一锅红油麻辣烫底料正在沸腾，周围摆放着各种食材和配菜。",
+    "keywords": [
+      "火锅",
+      "美食",
+      "餐饮",
+      "辣味料理",
+      "涮肉",
+      "配料丰富"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "成都市",
+      "landmarks": [],
+      "gps_latitude": 30.808655555555557,
+      "gps_longitude": 103.90690555555557,
+      "gps_address": "四川省成都市郫都区郫筒街道红光大道566号郫县站"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "室内灯光",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "零星几个",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_26.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "传统中式庭院夜景",
+    "description": "这张照片展示了一个充满古典气息的传统中式庭院在傍晚或夜间的情境。建筑物上悬挂着红色灯笼和油纸伞，营造出温暖而古朴的氛围。前景中有木质家具元素以及一个编织纹理的小灯罩装饰品，增添了浓厚的文化韵味。",
+    "keywords": [
+      "中国传统建筑",
+      "红灯笼",
+      "油纸伞",
+      "木制家具",
+      "水池倒影",
+      "黄昏景色"
+    ],
+    "has_text": false,
+    "image_type": "photo",
+    "location": {
+      "city": "成都市",
+      "landmarks": [],
+      "gps_latitude": 30.892872222222223,
+      "gps_longitude": 103.60056388888889,
+      "gps_address": "四川省成都市都江堰市青城山镇小鹏汽车充电站(小鹏超充成都青城山豪生国际酒店站)青城道温泉"
+    },
+    "landmark_candidates": [],
+    "ocr_text": [],
+    "weather": "夜晚/室内灯光",
+    "main_subjects": {
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
+    },
+    "background_people": "无",
+    "geo_reasoning": {
+      "source": "exif"
+    }
+  },
+  "data/travel/travel_27.HEIC": {
+    "category": "风景",
+    "slots": {},
+    "scene": "夜景水乡",
+    "description": "这张照片展示了一个充满东方风情的夜间景象，背景中有传统的木质房屋和红色灯笼装饰，水面倒映着树木和灯光，营造出宁静而浪漫的氛围。",
+    "keywords": [
+      "红灯笼",
+      "传统建筑",
+      "河流",
+      "树影",
+      "夜景"
+    ],
+    "has_text": true,
+    "image_type": "photo",
+    "location": {
+      "city": "成都市",
+      "landmarks": [],
+      "gps_latitude": 30.892919444444445,
+      "gps_longitude": 103.60032777777778,
+      "gps_address": "四川省成都市都江堰市青城山镇小鹏汽车充电站(小鹏超充成都青城山豪生国际酒店站)青城道温泉"
     },
     "landmark_candidates": [],
     "ocr_text": [],
     "weather": "夜晚",
     "main_subjects": {
-      "count": 1,
-      "count_category": "单个对象",
-      "primary_ethnicity": "",
-      "facial_expression": ""
+      "count": 0,
+      "count_category": "无",
+      "primary_ethnicity": "无",
+      "facial_expression": "无"
     },
     "background_people": "无",
-    "pet_details": {
-      "animal_type": "狗",
-      "breed": "比格犬",
-      "coat_color": [
-        "棕色",
-        "白色"
-      ],
-      "coat_pattern": "双色",
-      "size": "小型",
-      "pose": "坐着",
-      "expression": "欢快",
-      "action": "嗅花",
-      "accessories": [
-        "项圈"
-      ],
-      "environment": "室外夜景花卉旁",
-      "interaction": "被人手持并靠近花朵",
-      "count": 1,
-      "occlusion": "无",
-      "life_stage": "未知"
-    },
     "geo_reasoning": {
-      "note": "pet_image_skip_geo"
+      "source": "exif"
     }
   }
 }

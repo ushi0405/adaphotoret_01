@@ -7,53 +7,29 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import dashscope
 from dashscope import MultiModalConversation
+from PIL import Image
+from PIL.ExifTags import TAGS, GPSTAGS
+from pillow_heif import register_heif_opener
+from geopy.geocoders import Nominatim
+import requests
+import time
+
+register_heif_opener()  # 让 Pillow 支持 HEIC 格式
 
 # API 配置区
 dashscope.api_key = os.getenv("DASHSCOPE_API_KEY", "")
 VISION_MODEL = os.getenv("BAILIAN_VL_MODEL", "qwen2.5-vl-32b-instruct")
+AMAP_API_KEY = os.getenv("AMAP_API_KEY", "")  # 高德地图 Web API Key，不设置则不启用
 
 image_folder = "data"
 output_json = "metadata_cache.json"
 
-# 基础地标词典（仅用于真实户外场景）
-LANDMARK_TO_CITY_BASE = {
-    "成温立交": "成都",
-    "chengwen flyover": "成都",
-    "雍和宫": "北京",
-    "yonghegong": "北京",
-    "yonghegong lama temple": "北京",
-    "马甸桥": "北京",
-    "北太平桥": "北京",
-    "十七孔桥": "北京",
-    "17孔桥": "北京",
-    "颐和园十七孔桥": "北京",
-    "summer palace seventeen arch bridge": "北京",
-    "九眼桥": "成都",
-    "jiuyan bridge": "成都",
-}
 
-CITY_ALIASES = {
-    "北京": "北京", "beijing": "北京", "北京市": "北京",
-    "成都": "成都", "chengdu": "成都", "成都市": "成都",
-}
-
-GENERIC_TERMS = {"桥", "立交", "公园", "广场", "博物馆", "大学", "寺", "宫", "塔"}
-
-
+# ────────── 辅助函数 ──────────
 def normalize_text(text: str) -> str:
     if text is None:
         return ""
     return str(text).strip().lower()
-
-
-def normalize_city(city: str) -> str:
-    c = str(city or "").strip()
-    if not c:
-        return ""
-    c_lower = c.lower()
-    if c_lower in CITY_ALIASES:
-        return CITY_ALIASES[c_lower]
-    return c.replace("市", "").replace("特别行政区", "").strip()
 
 
 def encode_image_to_base64(image_path: str) -> str:
@@ -98,32 +74,8 @@ def safe_flatten_list(lst) -> List[str]:
     return result
 
 
-def is_geography_relevant(metadata: Dict) -> bool:
-    img_type = normalize_text(metadata.get("image_type", ""))
-    scene = normalize_text(metadata.get("scene", ""))
-    blacklist_types = {"screenshot", "ppt", "phone", "computer", "document", "presentation", "slide", "projector"}
-    blacklist_scenes = {"class", "lecture", "indoors", "classroom", "presentation", "document", "note", "text"}
-    for kw in blacklist_types:
-        if kw in img_type:
-            return False
-    for kw in blacklist_scenes:
-        if kw in scene:
-            return False
-    outdoor_keywords = {
-        "outdoor", "sunset", "beach", "mountain", "bridge", "street", "park", "landscape",
-        "户外", "日落", "夕阳", "海滩", "山", "桥", "立交", "街道", "公园", "风景", "自然",
-        "草地", "草坪", "沙滩", "森林"
-    }
-    for kw in outdoor_keywords:
-        if kw in scene or kw in img_type:
-            return True
-    if "photo" in img_type and not any(kw in img_type for kw in blacklist_types):
-        return True
-    return False
-
-
+# ────────── 宠物硬槽位验证 ──────────
 def validate_pet_slots(slots: Dict) -> Dict:
-    """校验并补全宠物硬槽位，包含年龄字段，且保证宠物count独立"""
     default_pet_slots = {
         "animal_type": "未知",
         "breed": "未知",
@@ -136,9 +88,9 @@ def validate_pet_slots(slots: Dict) -> Dict:
         "accessories": [],
         "environment": "未知",
         "interaction": "独处",
-        "count": 1,          # 仅统计该宠物物种数量，不含人物
+        "count": 1,
         "occlusion": "无",
-        "life_stage": "未知"  # 新增：幼年/成年/老年/未知
+        "life_stage": "未知"
     }
     validated = default_pet_slots.copy()
     for key, default_val in default_pet_slots.items():
@@ -159,15 +111,12 @@ def validate_pet_slots(slots: Dict) -> Dict:
                         validated[key] = int(val)
                     except:
                         validated[key] = default_val
-    # 动物类型标准化
-    if validated["animal_type"] not in {"猫", "狗", "兔子", "鸟", "鱼", "其他"}:
-        validated["animal_type"] = "其他"
-    # 年龄标准化
     if validated["life_stage"] not in {"幼年", "成年", "老年", "未知"}:
         validated["life_stage"] = "未知"
     return validated
 
 
+# ────────── 视觉模型调用 ──────────
 def call_bailian_vl(image_path: str) -> Optional[Dict]:
     print(f"  正在分析: {image_path}")
     prompt = """
@@ -184,7 +133,7 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
   "category": "人物｜宠物｜风景｜其他",
   "slots": {
     // 若 category 为 "宠物"，必须完整填写以下字段
-    "animal_type": "猫/狗/兔子/鸟/鱼/其他",
+    "animal_type": "请根据图片实际内容填写，可以是任意动物名称（如猫、狗、兔子、鸟、鱼、梅花鹿、羊等），不确定时填“未知”",
     "breed": "品种名或未知",
     "coat_color": ["颜色1", "颜色2"],
     "coat_pattern": "纯色/虎斑/斑点/其他",
@@ -224,6 +173,7 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
 **重要要求**：
 - 宠物图片的 count 严格只统计该宠物物种的数量，不包含人物或其他物体。例：一人一猫，count=1。
 - life_stage 根据体型、面部特征、毛发状态判断：幼年（体型小、圆脸）、成年（体型标准）、老年（毛发发白、神态衰老），不确定填"未知"。
+- animal_type 请根据实际动物自由填写，不要拘泥于猫狗；若无法辨认，填"未知"。
 - 若 category 为 "宠物"，slots 中所有字段必须填写，未知项填 "未知" 或 []。
 - 仅输出 JSON，不要额外解释。
 """
@@ -246,92 +196,7 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
         return None
 
 
-def extract_ocr_landmarks(text: str) -> List[str]:
-    if not text:
-        return []
-    text_lower = text.lower()
-    landmarks = []
-    for lm in LANDMARK_TO_CITY_BASE:
-        if lm.lower() in text_lower:
-            landmarks.append(lm)
-    if not landmarks and len(text) < 40:
-        match = re.search(r"[\u4e00-\u9fa5A-Za-z0-9·]{2,20}(桥|立交|宫|寺|塔|公园|广场|博物馆|大学)", text)
-        if match:
-            landmarks.append(match.group())
-    return landmarks
-
-
-def resolve_location(metadata: Dict) -> Dict:
-    loc = metadata.get("location") if isinstance(metadata.get("location"), dict) else {}
-    model_city = normalize_city(loc.get("city", ""))
-    model_landmarks = normalize_list_field(loc.get("landmarks", []))
-    candidates = metadata.get("landmark_candidates", [])
-    ocr_texts = normalize_list_field(metadata.get("ocr_text", []))
-    desc = str(metadata.get("description", ""))
-    kw = normalize_list_field(metadata.get("keywords", []))
-
-    pool = []
-    for lm in model_landmarks:
-        pool.append((lm, "model", 1.0))
-    for obj in candidates:
-        if isinstance(obj, dict):
-            name = str(obj.get("name", "")).strip()
-            conf = float(obj.get("confidence", 0.5))
-            if name:
-                pool.append((name, "candidate", conf))
-    for text in ocr_texts:
-        for phrase in extract_ocr_landmarks(text):
-            pool.append((phrase, "ocr", 0.95))
-
-    filtered = {}
-    for name, src, conf in pool:
-        if not name or name in GENERIC_TERMS:
-            continue
-        key = normalize_text(name)
-        if key not in filtered or conf > filtered[key][2]:
-            filtered[key] = (name, src, conf)
-
-    resolved_city = model_city
-    hits = []
-    if not resolved_city:
-        city_votes = {}
-        for key, (name, src, conf) in filtered.items():
-            city = LANDMARK_TO_CITY_BASE.get(name) or LANDMARK_TO_CITY_BASE.get(key)
-            if not city:
-                continue
-            if src == "ocr" or (src == "candidate" and conf > 0.7) or src == "model":
-                city_votes[city] = city_votes.get(city, 0) + conf
-                hits.append({"landmark": name, "resolver": "dict", "city": city, "conf": conf})
-        if len(city_votes) == 1:
-            city, score = list(city_votes.items())[0]
-            if score > 0.6:
-                resolved_city = city
-        elif city_votes:
-            hits.append({"warning": "conflicting_cities", "votes": city_votes})
-
-    if not resolved_city:
-        full_text = normalize_text(" ".join([desc] + kw + ocr_texts))
-        for alias, city in CITY_ALIASES.items():
-            if normalize_text(alias) in full_text:
-                resolved_city = city
-                hits.append({"alias": alias, "resolver": "text_alias", "city": city})
-                break
-
-    final_landmarks = sorted({name for name, _, _ in filtered.values()})
-    metadata["location"] = {
-        "city": normalize_city(resolved_city),
-        "landmarks": final_landmarks
-    }
-    metadata["geo_reasoning"] = {
-        "model_city": model_city,
-        "model_landmarks": model_landmarks,
-        "final_city": metadata["location"]["city"],
-        "final_landmarks": final_landmarks,
-        "resolver_hits": hits,
-    }
-    return metadata
-
-
+# ────────── 元数据规范化 ──────────
 def normalize_metadata_schema(metadata: Dict) -> Dict:
     metadata["scene"] = str(metadata.get("scene", "")).strip()
     metadata["description"] = str(metadata.get("description", "")).strip()
@@ -348,8 +213,26 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
         metadata["main_subjects"] = {"count": 0, "count_category": "无", "primary_ethnicity": "无", "facial_expression": "无"}
     else:
         p = metadata["main_subjects"]
-        p["count"] = p.get("count", 0)
-        p["count_category"] = str(p.get("count_category", "无"))
+        original_count = p.get("count", 0)
+        if not isinstance(original_count, int):
+            try:
+                original_count = int(original_count)
+            except:
+                original_count = 0
+        p["count"] = original_count
+
+        # 标准化 count_category
+        if original_count == 1:
+            p["count_category"] = "单人"
+        elif original_count == 2:
+            p["count_category"] = "两人"
+        elif original_count == 3:
+            p["count_category"] = "三人"
+        elif original_count >= 4:
+            p["count_category"] = "一群人"
+        else:
+            p["count_category"] = "无"
+
         p["primary_ethnicity"] = str(p.get("primary_ethnicity", "无"))
         p["facial_expression"] = str(p.get("facial_expression", "无"))
 
@@ -358,14 +241,25 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
     else:
         metadata["background_people"] = str(metadata["background_people"]).strip()
 
-    category = metadata.get("category", "其他")
+    # 确保 category 存在
+    category = metadata.get("category", "")
+    if not category or category.lower() in ["", "其他", "未知"]:
+        if "pet_details" in metadata and metadata["pet_details"].get("animal_type", "未知") != "未知":
+            category = "宠物"
+        else:
+            main = metadata.get("main_subjects", {})
+            if main.get("count", 0) > 0 and main.get("count_category") not in ["无", "单个物体", "单个对象", "单个动物"]:
+                category = "人物"
+            else:
+                category = "风景"
     metadata["category"] = category
+
+    # 处理宠物硬槽位
     slots = metadata.get("slots", {})
     if category == "宠物":
         validated_slots = validate_pet_slots(slots)
         metadata["pet_details"] = validated_slots
 
-        # 安全提取属性
         animal_type = validated_slots.get("animal_type", "")
         breed = validated_slots.get("breed", "")
         action = validated_slots.get("action", "")
@@ -374,7 +268,6 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
         life_stage = validated_slots.get("life_stage", "未知")
         coat_color_list = validated_slots.get("coat_color", [])
 
-        # 构建额外关键词
         extra_kw = []
         for attr_str in [animal_type, breed, action, environment, pose, life_stage]:
             if isinstance(attr_str, str) and attr_str and attr_str != "未知":
@@ -383,7 +276,6 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
             if isinstance(color, str) and color and color != "未知":
                 extra_kw.append(color)
 
-        # 安全合并关键词
         combined = metadata["keywords"] + extra_kw
         seen = set()
         new_keywords = []
@@ -393,7 +285,6 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
                 new_keywords.append(k)
         metadata["keywords"] = new_keywords
 
-        # 补充描述
         coat_str = ", ".join(coat_color_list) if coat_color_list else ""
         pet_desc = f"【宠物】品种：{breed}，毛色：{coat_str}，姿态：{pose}，动作：{action}，年龄：{life_stage}"
         metadata["description"] = metadata["description"] + " " + pet_desc
@@ -402,28 +293,125 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
     return metadata
 
 
+# ────────── EXIF GPS 提取（兼容 HEIC）──────────
+def get_gps_from_image(image_path: str):
+    """从图片（包括 HEIC）中提取 GPS 坐标，返回 (纬度, 经度) 或 None"""
+    try:
+        img = Image.open(image_path)
+        exif = img.getexif()
+        if not exif:
+            return None
+        gps_ifd = exif.get_ifd(34853)
+        if not gps_ifd:
+            return None
+
+        gps_info = {}
+        for tag, value in gps_ifd.items():
+            tag_name = GPSTAGS.get(tag, str(tag))
+            gps_info[tag_name] = value
+
+        if not gps_info:
+            return None
+
+        def parse_gps_value(value, ref):
+            if value is None or ref is None:
+                return None
+            degrees, minutes, seconds = value
+            decimal = float(degrees) + float(minutes) / 60.0 + float(seconds) / 3600.0
+            if ref in ('S', 'W'):
+                decimal = -decimal
+            return decimal
+
+        latitude = parse_gps_value(
+            gps_info.get("GPSLatitude"),
+            gps_info.get("GPSLatitudeRef")
+        )
+        longitude = parse_gps_value(
+            gps_info.get("GPSLongitude"),
+            gps_info.get("GPSLongitudeRef")
+        )
+        if latitude is not None and longitude is not None:
+            return (latitude, longitude)
+    except Exception as e:
+        print(f"  读取 GPS 信息失败: {e}")
+    return None
+
+
+# ────────── 逆地理编码（高德优先，回退 Nominatim）──────────
+def get_address_from_amap(lat, lon):
+    """使用高德地图 Web API 将经纬度转换为地址"""
+    if not AMAP_API_KEY:
+        return None
+    url = f"https://restapi.amap.com/v3/geocode/regeo?location={lon},{lat}&key={AMAP_API_KEY}"
+    try:
+        resp = requests.get(url, timeout=5)
+        data = resp.json()
+        if data["status"] == "1":
+            return data["regeocode"]["formatted_address"]
+    except Exception as e:
+        print(f"  高德逆地理编码失败: {e}")
+    return None
+
+
+def get_address_from_nominatim(lat, lon):
+    """免费的 Nominatim 逆地理编码"""
+    try:
+        geolocator = Nominatim(user_agent="adaphotoret")
+        location = geolocator.reverse((lat, lon), language="zh-CN")
+        if location:
+            return location.address
+    except Exception as e:
+        print(f"  Nominatim 逆地理编码失败: {e}")
+    return None
+
+
+def extract_city_from_address(address: str) -> str:
+    """从地址中提取城市名，如'四川省成都市郫都区' -> '成都'"""
+    if "市" in address:
+        idx = address.index("市")
+        start = address.rfind("省", 0, idx)
+        if start != -1:
+            return address[start+1:idx+1]
+        else:
+            parts = address[:idx+1].split(" ")
+            return parts[-1] if parts else address[:idx+1]
+    return ""
+
+
+# ────────── 图片分析 ──────────
 def analyze_image(image_path: str) -> Optional[Dict]:
     parsed = call_bailian_vl(image_path)
     if not parsed:
         return None
     parsed = normalize_metadata_schema(parsed)
 
-    if parsed.get("category") == "宠物":
-        print(f"    [宠物图片] 保留环境描述，跳过地标解析")
-        parsed["location"] = {"city": "", "landmarks": []}
-        parsed["geo_reasoning"] = {"note": "pet_image_skip_geo"}
-    elif is_geography_relevant(parsed):
-        print(f"    [地理图片] 进行地标解析")
-        parsed = resolve_location(parsed)
-    else:
-        print(f"    [非地理图片] 跳过地标解析")
-        parsed["location"] = {"city": "", "landmarks": []}
-        parsed["geo_reasoning"] = {"note": "non_geographic_image"}
+    # 自动读取 GPS 信息并逆地理编码
+    gps_coords = get_gps_from_image(image_path)
+    if gps_coords:
+        lat, lon = gps_coords
+        parsed.setdefault("location", {})
+        parsed["location"]["gps_latitude"] = lat
+        parsed["location"]["gps_longitude"] = lon
+
+        # 优先使用高德，没有 Key 则回退到 Nominatim
+        address = get_address_from_amap(lat, lon) if AMAP_API_KEY else get_address_from_nominatim(lat, lon)
+        if address:
+            parsed["location"]["gps_address"] = address
+            # 如果视觉模型没识别出城市，从地址中提取
+            if not parsed.get("location", {}).get("city"):
+                city = extract_city_from_address(address)
+                if city:
+                    parsed["location"]["city"] = city
+
+    parsed["geo_reasoning"] = {
+        "source": "exif" if gps_coords else "none"
+    }
     return parsed
 
 
+# ────────── 文件扫描 ──────────
 def list_image_files(folder: str) -> List[Path]:
-    exts = ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif"]
+    exts = ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif", "*.heic"]
     files = []
     for ext in exts:
         files.extend(Path(folder).rglob(ext))
@@ -438,22 +426,19 @@ def should_reanalyze(rel_path: str, existing: Dict, force_all: bool, force_paths
         return True
     if "weather" not in old or "main_subjects" not in old:
         return True
-    if old.get("geo_reasoning", {}).get("used_amap") is True:
-        return True
-    loc = old.get("location")
-    if not isinstance(loc, dict):
-        return True
-    img_type = old.get("image_type", "")
-    if ("screenshot" in img_type or "ppt" in img_type or "phone" in img_type) and (loc.get("city") or loc.get("landmarks")):
-        return True
-    if "data/pet" in rel_path and ("pet_details" not in old or "life_stage" not in old.get("pet_details", {})):
+    if "gps_address" not in old.get("location", {}) and rel_path.lower().endswith(('.jpg', '.jpeg', '.heic')):
         return True
     return False
 
 
+# ────────── 主流程 ──────────
 def main():
     if not dashscope.api_key:
         raise RuntimeError("请设置 DASHSCOPE_API_KEY 环境变量")
+    if AMAP_API_KEY:
+        print("检测到高德地图 API Key，将使用高德逆地理编码。")
+    else:
+        print("未设置 AMAP_API_KEY，将使用免费 Nominatim 逆地理编码。")
 
     if os.path.exists(output_json):
         with open(output_json, "r", encoding="utf-8") as f:
@@ -483,13 +468,13 @@ def main():
             json.dump(all_meta, f, ensure_ascii=False, indent=2)
 
         city = meta.get("location", {}).get("city", "")
+        gps_addr = meta.get("location", {}).get("gps_address", "")
         people_count = meta.get("main_subjects", {}).get("count", 0)
-        weather = meta.get("weather", "不确定")
         pet_info = ""
         if meta.get("category") == "宠物":
-            pd = meta["pet_details"]
+            pd = meta.get("pet_details", {})
             pet_info = f"动物: {pd.get('animal_type','')}，品种: {pd.get('breed','')}，年龄: {pd.get('life_stage','')}"
-        print(f"  已保存: {rel} | city={city or '(空)'} | 中心人数={people_count} | 天气={weather} {pet_info}")
+        print(f"  已保存: {rel} | city={city or '(空)'} | GPS地址={gps_addr[:30] if gps_addr else '无'} | 中心人数={people_count} | {pet_info}")
 
     print(f"\n完成，保存至 {output_json}")
 
