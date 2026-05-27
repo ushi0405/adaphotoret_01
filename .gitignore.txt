@@ -1,6 +1,9 @@
-venv/
+local_model/
+*.safetensors
+*.bin
+*.pth
+node_modules/
+dist/
 __pycache__/
 *.pyc
 .env
-node_modules/
-dist/
