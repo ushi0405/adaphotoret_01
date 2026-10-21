@@ -68,7 +68,7 @@ python auto_label.py --consent-external-processing
 ## Streamlit Community Cloud 部署
 
 1. 使用已有应用的管理页，核对仓库 `ushi0405/adaphotoret_01`、分支和入口 `streamlit_ui.py`；更新已关联分支可能自动重新部署。
-2. Python 选择 **3.12**。根目录 `requirements.txt` 是唯一默认依赖入口；不放入根目录 `environment.yml` 与其争夺优先级。
+2. 在 **Advanced settings** 中手动选择 Python **3.12**，不要直接沿用平台默认版本。当前固定的 CPU Torch 2.8.0 没有 Python 3.14 对应的安装包；若误用 3.14，需要重新部署并选择 3.12，单纯重启不会改变 Python 版本。根目录 `requirements.txt` 是唯一默认依赖入口；不放入根目录 `environment.yml` 与其争夺优先级。
 3. 不配置作者的 API secrets、仅发布本次用户授权的完整照片及元数据，不上传聊天历史或密钥；保留默认公共模式。
 4. 检查应用构建日志、无密钥首页、首次语义搜索、两个会话隔离及 BYOK 提示后再分享链接。
 
