@@ -1,0 +1,304 @@
+"""Privacy regressions; no provider API calls or model downloads required."""
+import ast
+import importlib.util
+import os
+from pathlib import Path
+from types import SimpleNamespace
+import tempfile
+import json
+import types
+import sys
+from contextlib import nullcontext
+from io import BytesIO
+from PIL import Image, ImageOps, UnidentifiedImageError
+import unittest
+from unittest.mock import Mock, patch
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("tested_explainer", ROOT / "llm_explainer.py")
+EXPLAINER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(EXPLAINER)
+
+
+def ui_functions(*names, **variables):
+    """Load selected pure UI helpers without running the Streamlit app."""
+    tree = ast.parse((ROOT / "streamlit_ui.py").read_text())
+    definitions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names]
+    for node in definitions:
+        node.decorator_list = []
+    scope = {"os": os, "Path": Path, **variables}
+    exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
+    return scope
+
+
+class CredentialTests(unittest.TestCase):
+    def test_public_factory_cannot_fall_back_to_host_key(self):
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "host-private-test-key"}):
+            with self.assertRaises(ValueError):
+                EXPLAINER.get_deepseek_client(allow_environment=False)
+
+    def test_factory_passes_only_explicit_key_and_does_not_mutate_environment(self):
+        fake_openai = SimpleNamespace(OpenAI=Mock(return_value=object()))
+        with patch.dict("sys.modules", {"openai": fake_openai}), patch.dict(os.environ, {"DEEPSEEK_API_KEY": "host-test-key"}):
+            EXPLAINER.get_deepseek_client("visitor-test-key", allow_environment=False)
+            self.assertEqual(fake_openai.OpenAI.call_args.kwargs["api_key"], "visitor-test-key")
+            self.assertEqual(os.environ["DEEPSEEK_API_KEY"], "host-test-key")
+
+    def test_errors_never_render_provider_exception_contents(self):
+        error = RuntimeError("sensitive-test-key and Authorization header")
+        self.assertNotIn("sensitive-test-key", EXPLAINER.safe_api_error(error))
+        error.status_code = 401
+        self.assertIn("密钥", EXPLAINER.safe_api_error(error))
+
+    def test_public_session_ignores_server_environment_key(self):
+        st = SimpleNamespace(session_state={})
+        scope = ui_functions("session_api_key", "fine_search_ready", st=st, LOCAL_MODE=False)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "host-private-test-key"}):
+            self.assertEqual(scope["session_api_key"](), "")
+            self.assertFalse(scope["fine_search_ready"]())
+            st.session_state["visitor_deepseek_key"] = "visitor-test-key"
+            self.assertFalse(scope["fine_search_ready"]())
+            st.session_state["deepseek_consent"] = True
+            self.assertTrue(scope["fine_search_ready"]())
+
+    def test_clear_credentials_revokes_consent(self):
+        st = SimpleNamespace(session_state={"visitor_deepseek_key": "test-key", "deepseek_consent": True})
+        scope = ui_functions("clear_visitor_credentials", st=st)
+        scope["clear_visitor_credentials"]()
+        self.assertNotIn("visitor_deepseek_key", st.session_state)
+        self.assertFalse(st.session_state["deepseek_consent"])
+
+    def test_local_mode_can_use_user_environment(self):
+        scope = ui_functions("session_api_key", st=SimpleNamespace(session_state={}), LOCAL_MODE=True)
+        with patch.dict(os.environ, {"DEEPSEEK_API_KEY": "local-test-key"}):
+            self.assertEqual(scope["session_api_key"](), "local-test-key")
+
+    def test_explanation_uses_request_client_without_environment_fallback(self):
+        fake_client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=Mock(
+            return_value=SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="真实测试解释"))])))))
+        with patch.object(EXPLAINER, "get_deepseek_client", side_effect=AssertionError("must not create host client")):
+            result = EXPLAINER.generate_explanation("猫", [{"img_path": "cat.jpg", "trace": [], "score": 90}],
+                                                    {"cat.jpg": {"category": "宠物"}},
+                                                    client=fake_client, allow_environment=False)
+        self.assertEqual(result, "真实测试解释")
+        self.assertEqual(fake_client.chat.completions.create.call_count, 1)
+
+    def test_explainer_closes_only_clients_it_creates_even_on_provider_error(self):
+        response = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="test explanation"))])
+        for fails in (False, True):
+            with self.subTest(provider_error=fails):
+                client = SimpleNamespace(close=Mock(), chat=SimpleNamespace(completions=SimpleNamespace(
+                    create=Mock(return_value=response, side_effect=RuntimeError("private fixture detail") if fails else None))))
+                with patch.object(EXPLAINER, "get_deepseek_client", return_value=client):
+                    result = EXPLAINER.generate_explanation("query", [{"img_path": "cat.jpg", "trace": [], "score": 1}], {},
+                                                            allow_environment=False)
+                client.close.assert_called_once_with()
+                self.assertNotIn("private fixture detail", result)
+        external = SimpleNamespace(close=Mock(), chat=SimpleNamespace(completions=SimpleNamespace(create=Mock(return_value=response))))
+        EXPLAINER.generate_explanation("query", [{"img_path": "cat.jpg", "trace": [], "score": 1}], {}, client=external)
+        external.close.assert_not_called()
+
+    def test_assistant_closes_request_client_on_success_preview_error_and_provider_error(self):
+        for outcome in ("success", "preview_error", "provider_error"):
+            with self.subTest(outcome=outcome):
+                chunk = SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="【思考】检索依据【行动】回答：测试答复"))])
+                create = Mock(return_value=[chunk], side_effect=RuntimeError("private provider detail") if outcome == "provider_error" else None)
+                client = SimpleNamespace(close=Mock(), chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+                placeholder = SimpleNamespace(markdown=Mock(), error=Mock())
+                st = SimpleNamespace(info=Mock(), error=Mock(), chat_message=lambda *_: nullcontext(), empty=lambda: placeholder)
+                preview = Mock(return_value=[], side_effect=RuntimeError("preview detail") if outcome == "preview_error" else None)
+                scope = ui_functions("run_assistant", "_run_assistant_with_client", st=st, image_paths=["cat.jpg"],
+                                     fine_search_ready=lambda: True, session_api_key=lambda: "visitor-fixture-key",
+                                     get_deepseek_client=Mock(return_value=client), preview_search_candidates=preview,
+                                     get_current_messages=lambda: [], add_message=Mock(), should_direct_search=lambda _: False,
+                                     safe_api_error=EXPLAINER.safe_api_error)
+                scope["run_assistant"]("query")
+                client.close.assert_called_once_with()
+                self.assertEqual(create.call_count, 0 if outcome == "preview_error" else 1)
+
+    def test_assistant_cleanup_failure_does_not_expose_provider_details(self):
+        client = SimpleNamespace(close=Mock(side_effect=RuntimeError("private cleanup detail")))
+        st = SimpleNamespace(info=Mock(), error=Mock())
+        scope = ui_functions("run_assistant", st=st, image_paths=["cat.jpg"], fine_search_ready=lambda: True,
+                             session_api_key=lambda: "visitor-fixture-key", get_deepseek_client=Mock(return_value=client),
+                             _run_assistant_with_client=Mock(side_effect=RuntimeError("private stream detail")))
+        scope["run_assistant"]("query")
+        client.close.assert_called_once_with()
+        self.assertNotIn("private", st.error.call_args.args[0])
+
+
+class SessionStorageTests(unittest.TestCase):
+    def test_public_history_and_libraries_never_read_or_write_files(self):
+        scope = ui_functions("load_all_conversations", "save_all_conversations", "load_photo_library_data",
+                             "save_photo_library_data", LOCAL_MODE=False)
+        with patch("builtins.open", side_effect=AssertionError("public state must not access files")):
+            self.assertEqual(scope["load_all_conversations"](), {})
+            scope["save_all_conversations"]({"one-session": {}})
+            self.assertEqual(scope["load_photo_library_data"](), {"photo_tags": {}, "libraries": {}})
+            scope["save_photo_library_data"]({"libraries": {"private": {}}})
+
+    def test_distinct_sessions_receive_distinct_empty_libraries(self):
+        scope = ui_functions("load_photo_library_data", LOCAL_MODE=False)
+        a, b = scope["load_photo_library_data"](), scope["load_photo_library_data"]()
+        a["libraries"]["one-user"] = {"photos": []}
+        self.assertEqual(b["libraries"], {})
+
+    def test_search_tool_passes_request_client_and_disallows_host_key(self):
+        search = Mock(return_value=(None, None, None, "empty", [], []))
+        scope = ui_functions("search_photos_tool", search_photos=search)
+        client = object()
+        scope["search_photos_tool"]("query", client)
+        search.assert_called_once_with("query", client=client, allow_environment=False, include_explanation=True)
+
+    def test_search_failure_does_not_fabricate_images_or_expose_error(self):
+        scope = ui_functions("search_photos_tool", search_photos=Mock(side_effect=RuntimeError("secret-test-value")))
+        result = scope["search_photos_tool"]("query")
+        self.assertEqual((result["top1"], result["top2"], result["top3"]), (None, None, None))
+        self.assertNotIn("secret-test-value", result["report"])
+
+    def test_no_credential_function_has_global_cache_decorator(self):
+        tree = ast.parse((ROOT / "streamlit_ui.py").read_text())
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef) and any(word in node.name for word in ("client", "api_key", "credential")):
+                self.assertFalse(node.decorator_list, node.name)
+
+
+class PhotoRenderingTests(unittest.TestCase):
+    def image_helpers(self, root):
+        return ui_functions("cached_image_tile", Image=Image, ImageOps=ImageOps, BytesIO=BytesIO,
+                            UnidentifiedImageError=UnidentifiedImageError,
+                            resolve_photo_path=lambda path: str(root / path))
+
+    def test_unicode_jpeg_reference_preserves_aspect_ratio_for_chat(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "中文 相册" / "猫咪_01.jpg"
+            path.parent.mkdir()
+            Image.new("RGB", (80, 20), "orange").save(path)
+            scope = self.image_helpers(root)
+            data = scope["cached_image_tile"]("中文 相册/猫咪_01.jpg", path.stat().st_mtime, crop=False)
+            with Image.open(BytesIO(data)) as image:
+                self.assertEqual(image.format, "JPEG")
+                self.assertEqual(image.size, (80, 20))
+
+    @unittest.skipUnless(importlib.util.find_spec("pillow_heif"), "HEIC codec not installed")
+    def test_uppercase_heic_unicode_reference_converts_to_browser_jpeg(self):
+        from pillow_heif import register_heif_opener
+        register_heif_opener()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "旅行照片_01.HEIC"
+            Image.new("RGB", (32, 24), "blue").save(path, format="HEIF")
+            scope = self.image_helpers(root)
+            data = scope["cached_image_tile"](path.name, path.stat().st_mtime)
+            self.assertTrue(data.startswith(b"\xff\xd8"))
+            with Image.open(BytesIO(data)) as image:
+                self.assertEqual(image.format, "JPEG")
+                self.assertEqual(image.size, (520, 390))
+
+    def test_missing_photo_reference_returns_none_not_a_fake_image(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            scope = self.image_helpers(Path(tmp))
+            self.assertIsNone(scope["cached_image_tile"]("不存在.HEIC", 0))
+
+    def test_all_ui_image_calls_use_converted_bytes(self):
+        tree = ast.parse((ROOT / "streamlit_ui.py").read_text())
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Attribute) and node.func.attr == "image"]
+        self.assertEqual(len(calls), 1)
+        self.assertIsInstance(calls[0].args[0], ast.Name)
+        self.assertEqual(calls[0].args[0].id, "tile")
+
+    @unittest.skipUnless((ROOT / "metadata.demo.json").is_file(), "full demo catalogue not staged")
+    def test_demo_metadata_references_exist_and_render(self):
+        from pillow_heif import register_heif_opener
+        register_heif_opener()
+        catalogue = json.loads((ROOT / "metadata.demo.json").read_text())
+        self.assertTrue(catalogue)
+        scope = self.image_helpers(ROOT)
+        for reference in catalogue:
+            with self.subTest(reference=reference):
+                path = (ROOT / reference).resolve()
+                self.assertTrue(path.is_relative_to(ROOT))
+                self.assertTrue(path.is_file(), f"Missing catalogue photo: {reference}")
+                data = scope["cached_image_tile"](reference, path.stat().st_mtime, crop=False)
+                self.assertIsNotNone(data, f"Cannot decode catalogue photo: {reference}")
+                with Image.open(BytesIO(data)) as image:
+                    self.assertEqual(image.format, "JPEG")
+
+
+@unittest.skipUnless(importlib.util.find_spec("streamlit"), "Streamlit not installed")
+class StreamlitInteractionTests(unittest.TestCase):
+    """Actual Streamlit UI runtime with a no-network catalogue backend fixture."""
+    def setUp(self):
+        import streamlit as st
+        from streamlit.testing.v1 import AppTest
+        self.st, self.AppTest = st, AppTest
+        st.cache_resource.clear()
+        catalogue_path = ROOT / "metadata.demo.json"
+        catalogue = json.loads(catalogue_path.read_text())
+        backend = types.ModuleType("AdaphotoRet_run")
+        backend.load_metadata = lambda: catalogue
+        backend.resolve_photo_path = lambda path: str(ROOT / path)
+        backend.parse_query = backend.rerank_score = Mock(side_effect=AssertionError("not needed for catalogue"))
+        backend.get_search_resources = Mock(side_effect=RuntimeError("model unavailable in this fixture"))
+        backend.search_photos = Mock(side_effect=AssertionError("no paid or semantic search in UI fixture"))
+        self.previous_backend = sys.modules.get("AdaphotoRet_run")
+        sys.modules["AdaphotoRet_run"] = backend
+        self.environment_patch = patch.dict(os.environ, {"ADAPHOTORET_LOCAL_MODE": "0", "DEEPSEEK_API_KEY": "host-fixture-secret"})
+        self.environment_patch.start()
+        self.backend = backend
+
+    def tearDown(self):
+        self.st.cache_resource.clear()
+        self.environment_patch.stop()
+        if self.previous_backend is None:
+            sys.modules.pop("AdaphotoRet_run", None)
+        else:
+            sys.modules["AdaphotoRet_run"] = self.previous_backend
+
+    def app(self):
+        app = self.AppTest.from_file(str(ROOT / "streamlit_ui.py"), default_timeout=180).run()
+        self.assertEqual(list(app.exception), [])
+        return app
+
+    def test_initial_browse_no_model_no_host_key_and_consent_gates_chat(self):
+        app = self.app()
+        self.backend.get_search_resources.assert_not_called()
+        self.assertEqual(len(app.get("imgs")), min(12, len(self.backend.load_metadata())))
+        self.assertEqual(app.text_input(key="visitor_deepseek_key").value, "")
+        app.radio[0].set_value("精细搜索").run()
+        self.assertTrue(app.chat_input[0].disabled)
+        app.text_input(key="visitor_deepseek_key").set_value("visitor-fixture-key").run()
+        self.assertTrue(app.chat_input[0].disabled)
+        app.checkbox(key="deepseek_consent").check().run()
+        self.assertFalse(app.chat_input[0].disabled)
+        next(button for button in app.button if button.label == "清除密钥并撤回同意").click().run()
+        self.assertEqual(app.text_input(key="visitor_deepseek_key").value, "")
+        self.assertFalse(app.checkbox(key="deepseek_consent").value)
+        self.assertTrue(app.chat_input[0].disabled)
+        self.assertEqual(list(app.exception), [])
+
+    def test_library_and_credentials_are_isolated_between_two_sessions(self):
+        first = self.app()
+        first.text_input(key="visitor_deepseek_key").set_value("first-session-fixture-key").run()
+        first.radio[0].set_value("照片库").run()
+        next(widget for widget in first.text_input if widget.label == "照片库名称").set_value("只属于第一个会话").run()
+        next(button for button in first.button if button.label == "保存照片库").click().run()
+        self.assertIn("只属于第一个会话", first.session_state["photo_library_data"]["libraries"])
+        second = self.app()
+        self.assertEqual(second.text_input(key="visitor_deepseek_key").value, "")
+        self.assertEqual(second.session_state["photo_library_data"]["libraries"], {})
+        self.assertEqual(list(first.exception), [])
+        self.assertEqual(list(second.exception), [])
+
+    def test_failed_semantic_download_is_visible_not_a_stacktrace_or_fake_results(self):
+        app = self.app()
+        next(widget for widget in app.text_input if "输入关键词" in widget.label).set_value("fixture query").run()
+        self.assertEqual(list(app.exception), [])
+        self.assertTrue(any("语义模型暂时不可用" in error.value for error in app.error))
+        self.assertEqual(len(app.get("imgs")), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

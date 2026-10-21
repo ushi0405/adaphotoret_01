@@ -1,98 +1,106 @@
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import uvicorn
+"""Optional legacy HTTP interface. Streamlit is the supported hosted demo.
+
+No server API key is used unless local mode is explicitly enabled. Public callers
+may pass X-DeepSeek-API-Key and X-Allow-External-Processing: true per request.
+Only catalogued images are served; the data directory is not exposed wholesale.
+"""
 import os
-import glob
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from functools import lru_cache
+from io import BytesIO
+from pathlib import Path
+from urllib.parse import quote
 
-os.environ["DEEPSEEK_API_KEY"] = "sk-fc83463934dd4c1c8e8f0b47f266938c"
+from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
+from pydantic import BaseModel, Field
 
-from AdaphotoRet_run import (
-    search_photos,
-    rank_all_photos,
-    metadata,
+from AdaphotoRet_run import metadata, rank_all_photos, resolve_photo_path, search_photos
+from llm_explainer import get_deepseek_client
+
+app = FastAPI(title="AdaphotoRet API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-DeepSeek-API-Key", "X-Allow-External-Processing"],
 )
 
-app = FastAPI()
-
-# ========== 手动 CORS 中间件（强制添加头） ==========
-class ForceCORSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        return response
-
-app.add_middleware(ForceCORSMiddleware)
-
-# 处理 OPTIONS 预检请求（关键！）
-@app.options("/{path:path}")
-async def preflight_handler(path: str):
-    return Response(
-        content="",
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*",
-        }
-    )
-# ============================================
-
-PHOTOS_BASE = r"C:\Users\Lenovo\Desktop\AdaphotoRet_523\data"
-app.mount("/photos", StaticFiles(directory=PHOTOS_BASE), name="photos")
-
-def to_url(abs_path: str) -> str:
-    if not abs_path:
-        return ""
-    rel = os.path.relpath(abs_path, PHOTOS_BASE).replace(os.sep, '/')
-    if rel.lower().endswith('.heic'):
-        rel = rel[:-5] + '.jpg'
-    return f"/photos/{rel}"
-
 class SearchRequest(BaseModel):
-    query: str
+    query: str = Field(max_length=2000)
+
+def to_url(path):
+    return "/photos/" + quote(path.removeprefix("data/"), safe="/") if path else ""
+
+@lru_cache(maxsize=32)
+def heic_preview(path: str, mtime: float):
+    """Browser-compatible JPEG response; keep the original HEIC unchanged."""
+    from PIL import Image, ImageOps
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    with Image.open(path) as original:
+        image = ImageOps.exif_transpose(original).convert("RGB")
+        image.thumbnail((1600, 1600))
+        output = BytesIO()
+        image.save(output, "JPEG", quality=85)
+        return output.getvalue()
+
+@app.get("/photos/{relative_path:path}")
+def photo(relative_path: str):
+    key = "data/" + relative_path
+    if key not in metadata:
+        raise HTTPException(404, "Photo not in the selected catalog")
+    file = Path(resolve_photo_path(key))
+    if not file.is_file():
+        raise HTTPException(404, "Photo unavailable")
+    if file.suffix.lower() in {".heic", ".heif"}:
+        try:
+            return Response(heic_preview(str(file), file.stat().st_mtime), media_type="image/jpeg")
+        except (OSError, ValueError):
+            raise HTTPException(422, "Photo could not be decoded") from None
+    return FileResponse(file)
 
 @app.post("/api/search")
-async def fine_search(req: SearchRequest):
-    top1, top2, top3, report, table, top_results = search_photos(req.query)
-    images = [to_url(p) for p in (top1, top2, top3) if p is not None]
-    images = [url.replace('.heic', '.jpg').replace('.HEIC', '.jpg') for url in images]
-    report = report.encode('utf-8').decode('utf-8')
-    return {"images": images, "report": report, "table": table}
+def fine_search(
+    req: SearchRequest,
+    x_deepseek_api_key: str | None = Header(default=None),
+    x_allow_external_processing: str | None = Header(default=None),
+):
+    client = None
+    if x_deepseek_api_key:
+        if x_allow_external_processing != "true":
+            raise HTTPException(400, "External-processing consent is required")
+        client = get_deepseek_client(x_deepseek_api_key, allow_environment=False)
+    elif os.getenv("ADAPHOTORET_LOCAL_MODE") == "1" and os.getenv("DEEPSEEK_API_KEY"):
+        client = get_deepseek_client()
+    try:
+        p1, p2, p3, report, table, _ = search_photos(
+            req.query, client=client, include_explanation=client is not None
+        )
+    except Exception:
+        raise HTTPException(503, "Search resources unavailable; check model setup") from None
+    finally:
+        if client is not None:
+            client.close()
+    return {"images": [to_url(p) for p in (p1, p2, p3) if p], "report": report, "table": table}
 
 @app.post("/api/global-search")
-async def global_search(req: SearchRequest):
-    query = req.query
-    print(f"[全局检索] 收到查询: {query}")
-    if not query.strip():
-        all_paths = list(metadata.keys())
-        all_paths.sort()
-        urls = [to_url(p) for p in all_paths]
-        return {"images": urls}
-    ranked_paths = rank_all_photos(query)
-    urls = [to_url(p) for p in ranked_paths]
-    urls = [url.replace('.heic', '.jpg').replace('.HEIC', '.jpg') for url in urls]
-    return {"images": urls}
+def global_search(req: SearchRequest):
+    try:
+        paths = rank_all_photos(req.query) if req.query.strip() else sorted(metadata)
+    except Exception:
+        raise HTTPException(503, "Search resources unavailable; check model setup") from None
+    return {"images": [to_url(p) for p in paths]}
 
 @app.get("/api/all-photos")
-async def get_all_photos():
-    exts = ('*.jpg', '*.jpeg', 'png', '*.JPG', '*.JPEG', '*.PNG')
-    photo_paths = []
-    for ext in exts:
-        photo_paths.extend(glob.glob(os.path.join(PHOTOS_BASE, '**', ext), recursive=True))
-    photo_paths = sorted(set(photo_paths))
-    urls = [f"/photos/{os.path.relpath(p, PHOTOS_BASE).replace(os.sep, '/')}" for p in photo_paths]
-    return {"photos": urls}
+def all_photos():
+    return {"photos": [to_url(p) for p in sorted(metadata)]}
 
 @app.get("/")
 def root():
-    return {"message": "AdaphotoRet API is running"}
+    return {"message": "AdaphotoRet API is running", "catalog_size": len(metadata)}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

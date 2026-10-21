@@ -1,16 +1,16 @@
 # attributes.py
 from typing import Dict, List
 
-# 人物属性 
+# 人物属性
 def extract_person_attributes(text: str) -> Dict[str, List[str]]:
     attr = {"count": [], "gender": [], "ethnicity": []}
     text_lower = text.lower()
 
     count_map = {
-        "一个": ["一个", "单个", "一人", "一名", "一位", "单人", "一只", "一头", "一条"],
-        "两个": ["两个", "两人", "一对", "二位", "两名", "双人","两只","两件","两头","两条"],
-        "三个": ["三个", "三人", "三位", "三名","三只","三头","三条","三件"],
-        "一群": ["一群", "一堆", "多人", "人们", "一群人","多只","多头","多件","多条"],
+        "一个": ["一个人", "单个人", "一人", "一名", "一位", "单人"],
+        "两个": ["两个人", "两人", "二位", "两名", "双人"],
+        "三个": ["三个人", "三人", "三位", "三名"],
+        "一群": ["一群人", "多人", "人们"],
     }
     for key, phrases in count_map.items():
         if any(p in text for p in phrases):
@@ -60,7 +60,11 @@ def expand_person_attributes(attr: Dict[str, List[str]]) -> List[str]:
 
 
 # ────────── 宠物属性 ──────────
-PET_ANIMAL_TYPES = {"猫", "猫咪", "猫猫", "狗", "狗狗", "犬", "兔子", "鸟", "鱼", "鹦鹉", "仓鼠"}
+PET_ANIMAL_TYPES = {
+    "猫", "猫咪", "猫猫", "狗", "狗狗", "犬", "兔子", "鸟", "鱼", "鹦鹉", "仓鼠",
+    "鹿", "梅花鹿", "羊", "山羊", "绵羊", "驴", "马", "鸭", "鸭子", "鹅", "天鹅",
+    "动物", "小动物", "宠物"
+}
 PET_COLORS = {"白色", "黑色", "棕色", "黄色", "金色", "灰色", "橙色", "奶油色", "米黄色", "浅棕色"}
 PET_ACTIONS = {"跑", "跳", "趴", "卧", "坐", "站立", "咬", "叼", "追逐", "挠", "叫", "看镜头", "证件照", "合照", "嗅花"}
 PET_ENVS = {"草地", "草坪", "沙滩", "公园", "室内", "地毯", "沙发", "床上", "浴室", "户外", "街道", "屋顶", "溪流", "田野", "花丛"}
@@ -123,6 +127,12 @@ def extract_pet_attributes(text: str) -> Dict[str, List[str]]:
                 attr["animal_type"].append("猫")
             elif animal in {"狗", "狗狗", "犬"}:
                 attr["animal_type"].append("狗")
+            elif animal in {"羊", "山羊", "绵羊"}:
+                attr["animal_type"].append(animal)
+            elif animal in {"鸭", "鸭子"}:
+                attr["animal_type"].append("鸭")
+            elif animal in {"动物", "小动物", "宠物"}:
+                attr["animal_type"].append("动物")
             else:
                 attr["animal_type"].append(animal)
 

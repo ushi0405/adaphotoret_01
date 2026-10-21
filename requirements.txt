@@ -1,0 +1,20 @@
+# Tested together on CPython 3.12. CPU-only Torch on Linux/Streamlit Cloud.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0+cpu; sys_platform == "linux"
+torch==2.8.0; sys_platform != "linux"
+streamlit==1.54.0
+Pillow==11.3.0
+pillow-heif==1.1.1
+numpy==2.2.6
+sentence-transformers==5.1.2
+transformers==4.57.1
+faiss-cpu==1.12.0
+jieba==0.42.1
+openai==2.8.1
+dashscope==1.25.2
+geopy==2.4.1
+requests==2.32.5
+fastapi==0.121.2
+pydantic==2.11.10
+uvicorn==0.38.0
+gradio==5.49.1

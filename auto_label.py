@@ -1,4 +1,6 @@
-﻿import base64
+import argparse
+import base64
+from io import BytesIO
 import json
 import os
 import re
@@ -7,7 +9,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 import dashscope
 from dashscope import MultiModalConversation
-from PIL import Image
+from PIL import Image, ImageOps
 from PIL.ExifTags import TAGS, GPSTAGS
 from pillow_heif import register_heif_opener
 from geopy.geocoders import Nominatim
@@ -21,8 +23,17 @@ dashscope.api_key = os.getenv("DASHSCOPE_API_KEY", "")
 VISION_MODEL = os.getenv("BAILIAN_VL_MODEL", "qwen2.5-vl-32b-instruct")
 AMAP_API_KEY = os.getenv("AMAP_API_KEY", "")  # 高德地图 Web API Key，不设置则不启用
 
-image_folder = "data"
-output_json = "metadata_cache.json"
+BASE_DIR = Path(__file__).resolve().parent
+image_folder = BASE_DIR / "data"
+output_json = BASE_DIR / "metadata_cache.json"
+
+ANIMAL_CATEGORIES = {"动物", "宠物"}
+NON_HUMAN_OBJECT_TERMS = {
+    "玩偶", "娃娃", "玩具", "雕塑", "雕像", "陶俑", "兵马俑", "石雕", "佛像", "文物",
+    "青铜器", "器物", "展品", "模型", "机器人", "机器", "人造装饰品"
+}
+FOOD_TERMS = {"食物", "美食", "菜肴", "料理", "火锅", "羊汤", "水煮", "豆腐脑", "包子", "餐桌", "餐厅"}
+SCREENSHOT_TERMS = {"截图", "文档", "PPT", "幻灯片", "手机截图", "网页", "论文", "文字"}
 
 
 # ────────── 辅助函数 ──────────
@@ -33,8 +44,12 @@ def normalize_text(text: str) -> str:
 
 
 def encode_image_to_base64(image_path: str) -> str:
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+    # Decode HEIC/PNG/etc., correct orientation, and omit EXIF/GPS in API bytes.
+    with Image.open(image_path) as image:
+        converted = ImageOps.exif_transpose(image).convert("RGB")
+        buffer = BytesIO()
+        converted.save(buffer, format="JPEG", quality=90)
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
 def safe_parse_json(content: str) -> Optional[Dict]:
@@ -123,16 +138,19 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
 你是一个图像元数据标注器。根据图片内容，先判断**主要主体类别**（category），然后输出对应的结构化 slots，最后仍保留通用字段。
 
 **category 可选值**：
-- "人物"：以人类为主体的照片
-- "宠物"：以宠物（猫、狗、鸟等）为主体的照片
-- "风景"：自然或城市景观，无明显主体
-- "其他"：截图、文档、物品等
+- "人物"：以真实人类为主体的照片。注意：雕塑、玩偶、陶俑、佛像、机器人外观模型都不是人物。
+- "动物"：以真实动物或宠物为主体的照片（猫、狗、鸟、鱼、羊、鹿、驴、鸭、鹅等）。
+- "美食"：以食物、菜肴、餐桌餐饮为主体的照片。
+- "风景"：自然、城市、建筑、地标景观，无明显主体。
+- "物品"：玩偶、机器人、雕塑、文物、展品、器物、模型等非生命主体。
+- "截图"：手机截图、PPT、文档、网页等。
+- "其他"：无法归入以上类别。
 
 **输出格式**（严格 JSON，不要添加任何注释）：
 {
-  "category": "人物｜宠物｜风景｜其他",
+  "category": "人物｜动物｜美食｜风景｜物品｜截图｜其他",
   "slots": {
-    // 若 category 为 "宠物"，必须完整填写以下字段
+    // 若 category 为 "动物"，必须完整填写以下字段
     "animal_type": "请根据图片实际内容填写，可以是任意动物名称（如猫、狗、兔子、鸟、鱼、梅花鹿、羊等），不确定时填“未知”",
     "breed": "品种名或未知",
     "coat_color": ["颜色1", "颜色2"],
@@ -164,14 +182,17 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
   "main_subjects": {
     "count": 0,
     "count_category": "单人/两人/三人/一群人/无",
-    "primary_ethnicity": "亚洲人/黄种人/西方人/白种人/非洲人/黑种人/混合/无",
+    "primary_ethnicity": "", // 兼容保留空值；禁止推断种族、民族或国籍
     "facial_expression": "开心/平静/严肃/悲伤/兴奋/专注/无"
   },
   "background_people": "很多/零星几个/无"
 }
 
 **重要要求**：
-- 宠物图片的 count 严格只统计该宠物物种的数量，不包含人物或其他物体。例：一人一猫，count=1。
+- 只描述可见的非敏感特征（人数、衣着、动作等）。不得从人脸或外观推断种族、民族、国籍、宗教或健康状况；这些属性也不得写入描述或关键词。
+- 动物图片的 count 严格只统计该动物物种的数量，不包含人物或其他物体。例：一人一猫，count=1。
+- 对玩偶、鸭形装饰、动物模型、陶俑、雕塑、佛像、机器人外观模型，category 必须是 "物品"，不能标成 "人物" 或 "动物"。
+- main_subjects 只统计真实人类；雕塑/陶俑/佛像/玩偶/机器人模型一律 count=0，count_category="无"。
 - life_stage 根据体型、面部特征、毛发状态判断：幼年（体型小、圆脸）、成年（体型标准）、老年（毛发发白、神态衰老），不确定填"未知"。
 - animal_type 请根据实际动物自由填写，不要拘泥于猫狗；若无法辨认，填"未知"。
 - 若 category 为 "宠物"，slots 中所有字段必须填写，未知项填 "未知" 或 []。
@@ -187,17 +208,26 @@ def call_bailian_vl(image_path: str) -> Optional[Dict]:
     try:
         response = MultiModalConversation.call(model=VISION_MODEL, messages=messages)
         if response.status_code != 200:
-            print(f"  API 调用失败: {response.code} - {response.message}")
+            print(f"  API 调用失败（代码: {response.code}）；请检查模型权限、密钥和余额。")
             return None
         content = response.output.choices[0].message.content[0]["text"]
         return safe_parse_json(content)
     except Exception as e:
-        print(f"  请求异常: {e}")
+        print(f"  请求异常 ({type(e).__name__})；详细凭据不会记录。")
         return None
 
 
 # ────────── 元数据规范化 ──────────
 def normalize_metadata_schema(metadata: Dict) -> Dict:
+    # Discard unexpected sensitive-attribute fields even if a provider ignores the prompt.
+    forbidden = {"primary_ethnicity", "ethnic_ratios", "ethnicity", "race", "nationality", "religion", "health_status"}
+    def strip_sensitive(value):
+        if isinstance(value, dict):
+            return {key: strip_sensitive(item) for key, item in value.items() if key.lower() not in forbidden}
+        if isinstance(value, list):
+            return [strip_sensitive(item) for item in value]
+        return value
+    metadata = strip_sensitive(metadata)
     metadata["scene"] = str(metadata.get("scene", "")).strip()
     metadata["description"] = str(metadata.get("description", "")).strip()
     metadata["keywords"] = normalize_list_field(metadata.get("keywords", []))
@@ -210,7 +240,7 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
         metadata["weather"] = str(metadata["weather"]).strip()
 
     if "main_subjects" not in metadata or not isinstance(metadata["main_subjects"], dict):
-        metadata["main_subjects"] = {"count": 0, "count_category": "无", "primary_ethnicity": "无", "facial_expression": "无"}
+        metadata["main_subjects"] = {"count": 0, "count_category": "无", "primary_ethnicity": "", "facial_expression": "无"}
     else:
         p = metadata["main_subjects"]
         original_count = p.get("count", 0)
@@ -233,7 +263,11 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
         else:
             p["count_category"] = "无"
 
-        p["primary_ethnicity"] = str(p.get("primary_ethnicity", "无"))
+        p["primary_ethnicity"] = ""
+        p.pop("ethnic_ratios", None)
+        p.pop("race", None)
+        p.pop("ethnicity", None)
+        p.pop("nationality", None)
         p["facial_expression"] = str(p.get("facial_expression", "无"))
 
     if "background_people" not in metadata:
@@ -241,11 +275,26 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
     else:
         metadata["background_people"] = str(metadata["background_people"]).strip()
 
-    # 确保 category 存在
-    category = metadata.get("category", "")
-    if not category or category.lower() in ["", "其他", "未知"]:
+    text_blob = " ".join([
+        metadata.get("scene", ""),
+        metadata.get("description", ""),
+        " ".join(metadata.get("keywords", [])),
+        metadata.get("image_type", ""),
+    ])
+
+    # 确保 category 存在，并修正视觉模型常见误标。
+    category = str(metadata.get("category", "")).strip()
+    if category == "宠物":
+        category = "动物"
+    if any(term in text_blob for term in NON_HUMAN_OBJECT_TERMS):
+        category = "物品"
+    elif any(term in text_blob for term in SCREENSHOT_TERMS) or "screenshot" in metadata.get("image_type", ""):
+        category = "截图"
+    elif any(term in text_blob for term in FOOD_TERMS):
+        category = "美食"
+    elif not category or category.lower() in ["", "其他", "未知"]:
         if "pet_details" in metadata and metadata["pet_details"].get("animal_type", "未知") != "未知":
-            category = "宠物"
+            category = "动物"
         else:
             main = metadata.get("main_subjects", {})
             if main.get("count", 0) > 0 and main.get("count_category") not in ["无", "单个物体", "单个对象", "单个动物"]:
@@ -254,11 +303,15 @@ def normalize_metadata_schema(metadata: Dict) -> Dict:
                 category = "风景"
     metadata["category"] = category
 
+    if category in {"物品", "美食", "风景", "截图", "其他"} and any(term in text_blob for term in NON_HUMAN_OBJECT_TERMS):
+        metadata["main_subjects"] = {"count": 0, "count_category": "无", "primary_ethnicity": "", "facial_expression": "无"}
+
     # 处理宠物硬槽位
     slots = metadata.get("slots", {})
-    if category == "宠物":
+    if category in ANIMAL_CATEGORIES:
         validated_slots = validate_pet_slots(slots)
         metadata["pet_details"] = validated_slots
+        metadata["animal_details"] = validated_slots
 
         animal_type = validated_slots.get("animal_type", "")
         breed = validated_slots.get("breed", "")
@@ -349,7 +402,7 @@ def get_address_from_amap(lat, lon):
         if data["status"] == "1":
             return data["regeocode"]["formatted_address"]
     except Exception as e:
-        print(f"  高德逆地理编码失败: {e}")
+        print(f"  高德逆地理编码失败 ({type(e).__name__})")
     return None
 
 
@@ -379,14 +432,14 @@ def extract_city_from_address(address: str) -> str:
 
 
 # ────────── 图片分析 ──────────
-def analyze_image(image_path: str) -> Optional[Dict]:
+def analyze_image(image_path: str, *, enable_geocoding: bool = False) -> Optional[Dict]:
     parsed = call_bailian_vl(image_path)
     if not parsed:
         return None
     parsed = normalize_metadata_schema(parsed)
 
     # 自动读取 GPS 信息并逆地理编码
-    gps_coords = get_gps_from_image(image_path)
+    gps_coords = get_gps_from_image(image_path) if enable_geocoding else None
     if gps_coords:
         lat, lon = gps_coords
         parsed.setdefault("location", {})
@@ -411,14 +464,12 @@ def analyze_image(image_path: str) -> Optional[Dict]:
 
 # ────────── 文件扫描 ──────────
 def list_image_files(folder: str) -> List[Path]:
-    exts = ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif", "*.heic"]
-    files = []
-    for ext in exts:
-        files.extend(Path(folder).rglob(ext))
-    return files
+    exts = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".heic", ".heif"}
+    return sorted(path for path in Path(folder).rglob("*")
+                  if path.is_file() and path.suffix.lower() in exts)
 
 
-def should_reanalyze(rel_path: str, existing: Dict, force_all: bool, force_paths: Set[str]) -> bool:
+def should_reanalyze(rel_path: str, existing: Dict, force_all: bool, force_paths: Set[str], *, enable_geocoding: bool = False) -> bool:
     if force_all or rel_path in force_paths:
         return True
     old = existing.get(rel_path)
@@ -426,19 +477,39 @@ def should_reanalyze(rel_path: str, existing: Dict, force_all: bool, force_paths
         return True
     if "weather" not in old or "main_subjects" not in old:
         return True
-    if "gps_address" not in old.get("location", {}) and rel_path.lower().endswith(('.jpg', '.jpeg', '.heic')):
+    category = str(old.get("category", "")).strip()
+    text_blob = " ".join([
+        str(old.get("scene", "")),
+        str(old.get("description", "")),
+        " ".join(old.get("keywords", [])) if isinstance(old.get("keywords", []), list) else str(old.get("keywords", "")),
+    ])
+    if category == "宠物":
+        return True
+    if category in {"人物", "宠物", "风景"} and any(term in text_blob for term in NON_HUMAN_OBJECT_TERMS):
+        return True
+    if category == "风景" and any(term in text_blob for term in FOOD_TERMS):
+        return True
+    if enable_geocoding and "gps_address" not in old.get("location", {}) and rel_path.lower().endswith(('.jpg', '.jpeg', '.heic')):
         return True
     return False
 
 
 # ────────── 主流程 ──────────
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Annotate your own photos using DashScope; never run automatically in the public demo.")
+    parser.add_argument("--consent-external-processing", action="store_true",
+                        help="I consent to sending selected photos to DashScope (may incur charges).")
+    parser.add_argument("--enable-geocoding", action="store_true",
+                        help="Also send EXIF GPS to Amap/Nominatim and store location metadata.")
+    args = parser.parse_args(argv)
+    if not args.consent_external_processing:
+        parser.error("照片将发送到 DashScope；确认权限和费用后添加 --consent-external-processing。GPS 默认不发送。")
     if not dashscope.api_key:
         raise RuntimeError("请设置 DASHSCOPE_API_KEY 环境变量")
-    if AMAP_API_KEY:
-        print("检测到高德地图 API Key，将使用高德逆地理编码。")
+    if args.enable_geocoding:
+        print("已允许向高德/Nominatim 发送 GPS；位置将保存在本地元数据中。")
     else:
-        print("未设置 AMAP_API_KEY，将使用免费 Nominatim 逆地理编码。")
+        print("GPS 读取及外部逆地理编码已关闭。")
 
     if os.path.exists(output_json):
         with open(output_json, "r", encoding="utf-8") as f:
@@ -453,12 +524,12 @@ def main():
     print(f"共 {len(images)} 张图片，模型: {VISION_MODEL}")
 
     for img in images:
-        rel = str(img).replace("\\", "/")
-        if not should_reanalyze(rel, all_meta, force_all, force_paths):
+        rel = img.relative_to(BASE_DIR).as_posix()
+        if not should_reanalyze(rel, all_meta, force_all, force_paths, enable_geocoding=args.enable_geocoding):
             print(f"  跳过: {rel}")
             continue
 
-        meta = analyze_image(str(img))
+        meta = analyze_image(str(img), enable_geocoding=args.enable_geocoding)
         if not meta:
             print(f"  失败: {rel}")
             continue
@@ -474,7 +545,7 @@ def main():
         if meta.get("category") == "宠物":
             pd = meta.get("pet_details", {})
             pet_info = f"动物: {pd.get('animal_type','')}，品种: {pd.get('breed','')}，年龄: {pd.get('life_stage','')}"
-        print(f"  已保存: {rel} | city={city or '(空)'} | GPS地址={gps_addr[:30] if gps_addr else '无'} | 中心人数={people_count} | {pet_info}")
+        print(f"  已保存: {rel} | GPS信息={'已保存（不记录具体地址）' if gps_addr else '无'} | 中心人数={people_count} | {pet_info}")
 
     print(f"\n完成，保存至 {output_json}")
 

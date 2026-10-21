@@ -1,17 +1,19 @@
-﻿import json
+import json
 import math
 import os
 import re
+from functools import lru_cache
+from pathlib import Path
+from threading import RLock
+import warnings
 from typing import Dict, List, Set, Tuple
 
 import faiss
-import gradio as gr
 import jieba
 import jieba.posseg as pseg
 from pillow_heif import register_heif_opener
 register_heif_opener()
 
-#os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 from sentence_transformers import SentenceTransformer
 
 from attributes import (
@@ -22,9 +24,42 @@ from attributes import (
 )
 from llm_explainer import generate_explanation
 
-print("正在加载语义模型...")
-model = SentenceTransformer("./local_model")
-print("语义模型加载完成。")
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_ID = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+_RESOURCE_LOCK = RLock()
+
+
+def project_path(value):
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else BASE_DIR / path
+
+
+def resolve_photo_path(value):
+    """Resolve portable metadata paths without changing keys in saved libraries."""
+    return str(project_path(value).resolve())
+
+
+def metadata_path():
+    local_mode = os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
+    default = "metadata_cache.json" if local_mode else "metadata.demo.json"
+    # Private metadata is never selected implicitly by a public deployment.
+    value = os.getenv("ADAPHOTORET_METADATA_FILE", default) if local_mode else default
+    return project_path(value)
+
+
+@lru_cache(maxsize=1)
+def get_model():
+    """Load once, on demand; never run untrusted model code or force a mirror."""
+    model_dir = project_path(os.getenv("ADAPHOTORET_MODEL_DIR", "local_model"))
+    complete_local = (model_dir / "config.json").is_file() and any(
+        (model_dir / name).is_file() for name in ("model.safetensors", "pytorch_model.bin")
+    )
+    options = {"trust_remote_code": False, "device": os.getenv("ADAPHOTORET_DEVICE", "cpu")}
+    if complete_local:
+        return SentenceTransformer(str(model_dir), local_files_only=True, **options)
+    return SentenceTransformer(MODEL_ID, revision=MODEL_REVISION, **options)
+
 
 # 基础地标知识完全移除，只保留必要的场景/活动词典
 GRASS_TERMS = {"草地", "草坪", "草场", "grass", "lawn", "field"}
@@ -36,6 +71,30 @@ ACADEMIC_WRITING_TERMS = {"学术英语", "academic english", "academic writing"
 EXAMPLE_TERMS = {"示例", "例文", "范文", "sample", "example", "example essay", "示例论文"}
 STRUCTURE_TERMS = {"结构", "框架", "essay title", "thesis statement",
                    "topic sentence", "reference list", "main body"}
+GEO_SUFFIX_TERMS = {
+    "省", "市", "区", "县", "镇", "街", "路", "大道", "街道", "古城", "景区", "公园",
+    "大学", "校区", "山", "寺", "庙", "宫", "塔", "桥", "湖", "海", "江", "河", "湾", "岛"
+}
+NON_GEO_ENTITY_TERMS = {
+    "机器人", "人形", "人形机器人", "玩偶", "娃娃", "雕塑", "人物", "宠物", "照片", "图片",
+    "美食", "水煮肉片", "衣服", "T恤", "白色Polo", "外观"
+}
+ANIMAL_CATEGORIES = {"动物", "宠物"}
+NON_HUMAN_OBJECT_TERMS = {
+    "玩偶", "娃娃", "玩具", "雕塑", "雕像", "陶俑", "兵马俑", "石雕", "佛像", "文物",
+    "青铜器", "器物", "展品", "模型", "机器人", "机器", "人造装饰品"
+}
+FOOD_TERMS = {"食物", "美食", "菜肴", "料理", "火锅", "羊汤", "水煮", "豆腐脑", "包子", "餐桌", "餐厅"}
+SCREENSHOT_TERMS = {"截图", "文档", "PPT", "幻灯片", "手机截图", "网页", "论文", "文字"}
+PERSON_QUERY_TERMS = {"人", "人物", "真人", "游客", "男", "女", "男人", "女人", "男生", "女生", "小孩", "孩子", "老人"}
+OBJECT_SYNONYM_MAP = {
+    "机器人": ["机器人", "机器人外观", "未来科技感", "机械人", "智能机器人", "robot"],
+    "人形机器人": ["机器人", "机器人外观", "未来科技感", "人形机器人", "robot"],
+    "玩偶": ["玩偶", "娃娃", "玩具娃娃", "玩具", "可爱形象"],
+    "雕塑": ["雕塑", "雕像", "石雕", "佛像", "陶俑", "雕刻"],
+    "陶俑": ["陶俑", "陶瓷雕像", "骑马俑", "唐代风格"],
+    "青铜器": ["青铜器", "古代艺术品", "器物", "兽面"],
+}
 
 
 def normalize_text(text: str) -> str:
@@ -45,6 +104,16 @@ def normalize_text(text: str) -> str:
 
 def match_terms(text: str, terms: Set[str]) -> bool:
     return any(term in normalize_text(text) for term in terms)
+
+
+def normalize_trace(trace):
+    normalized = []
+    for item in trace:
+        if len(item) == 3:
+            normalized.append(item)
+        elif len(item) == 2:
+            normalized.append((item[0], item[1], item[0]))
+    return normalized
 
 
 def parse_location_from_info(info: Dict):
@@ -61,27 +130,74 @@ def parse_location_from_info(info: Dict):
     return cities, landmarks
 
 
+def get_field(info: Dict, key: str, default=""):
+    if key in info and info.get(key) not in (None, ""):
+        return info.get(key)
+    general = info.get("general_fields", {})
+    if isinstance(general, dict):
+        return general.get(key, default)
+    return default
+
+
+def infer_category(info: Dict) -> str:
+    category = str(info.get("category", "")).strip()
+    if category == "宠物":
+        category = "动物"
+    text_blob = normalize_text(" ".join([
+        str(get_field(info, "scene", "")),
+        str(get_field(info, "description", "")),
+        " ".join(str(k) for k in get_field(info, "keywords", []) if isinstance(get_field(info, "keywords", []), list)),
+        str(get_field(info, "image_type", "")),
+    ]))
+    if any(term.lower() in text_blob for term in NON_HUMAN_OBJECT_TERMS):
+        return "物品"
+    if any(term.lower() in text_blob for term in FOOD_TERMS):
+        return "美食"
+    if any(term.lower() in text_blob for term in SCREENSHOT_TERMS) or "screenshot" in text_blob:
+        return "截图"
+    if category:
+        return category
+    if "pet_details" in info or "animal_details" in info:
+        return "动物"
+    main = info.get("main_subjects", {})
+    if isinstance(main, dict) and main.get("count", 0) > 0:
+        return "人物"
+    return "风景"
+
+
 def flatten_info_text(info: Dict) -> str:
-    scene = str(info.get("scene", ""))
-    desc = str(info.get("description", ""))
-    image_type = str(info.get("image_type", ""))
-    keywords = info.get("keywords", [])
+    scene = str(get_field(info, "scene", ""))
+    desc = str(get_field(info, "description", ""))
+    image_type = str(get_field(info, "image_type", ""))
+    keywords = get_field(info, "keywords", [])
     kw_text = " ".join(str(k) for k in keywords) if isinstance(keywords, list) else str(keywords)
     loc = info.get("location", {}) if isinstance(info.get("location"), dict) else {}
     city = loc.get("city", "")
     landmarks = loc.get("landmarks", [])
+    gps_address = loc.get("gps_address", "")
     if isinstance(landmarks, list):
         landmarks_text = " ".join(str(x) for x in landmarks)
     else:
         landmarks_text = str(landmarks) if landmarks else ""
-    loc_text = f"{city} {landmarks_text}".strip()
-    return f"{scene} {image_type} {desc} {kw_text} {loc_text}".strip()
+    loc_text = f"{city} {landmarks_text} {gps_address}".strip()
+    category = str(info.get("category", ""))
+    return f"{category} {scene} {image_type} {desc} {kw_text} {loc_text}".strip()
 
 
 def enrich_metadata(metadata_dict):
     enriched = {}
     for path, info in metadata_dict.items():
         cloned = dict(info)
+        inferred_category = infer_category(cloned)
+        cloned["category"] = inferred_category
+        if inferred_category in {"物品", "美食", "风景", "截图", "其他"} and any(
+            term in flatten_info_text(cloned) for term in NON_HUMAN_OBJECT_TERMS
+        ):
+            cloned["main_subjects"] = {"count": 0, "count_category": "无", "primary_ethnicity": "无", "facial_expression": "无"}
+        if "animal_details" not in cloned and "pet_details" in cloned:
+            cloned["animal_details"] = cloned["pet_details"]
+        if "pet_details" not in cloned and "animal_details" in cloned:
+            cloned["pet_details"] = cloned["animal_details"]
         flat_text = flatten_info_text(cloned)
         doc_cities, doc_landmarks = parse_location_from_info(cloned)
         cloned["_search_text"] = flat_text
@@ -113,11 +229,15 @@ def extract_geo_candidates(text: str) -> List[str]:
     candid = []
     words = pseg.cut(text)
     for w, flag in words:
-        if len(w) >= 2 and flag in ('ns', 'nz', 'n') and w not in {"照片", "图片", "一个", "两个", "一群", "多个", "宠物", "动物", "比赛", "娱乐"}:
+        if w in NON_GEO_ENTITY_TERMS:
+            continue
+        if len(w) >= 2 and flag == 'ns':
             candid.append(w)
     chinese_chunks = re.findall(r'[\u4e00-\u9fff]{2,}', text)
     for chunk in chinese_chunks:
-        if chunk not in candid:
+        if chunk in NON_GEO_ENTITY_TERMS:
+            continue
+        if any(suffix in chunk for suffix in GEO_SUFFIX_TERMS) and chunk not in candid:
             candid.append(chunk)
     return list(set(candid))
 
@@ -130,17 +250,35 @@ def parse_query(user_query: str) -> Dict:
     q = normalize_text(processed)
     entities = extract_entities_by_pos(processed)
     person_attr = extract_person_attributes(processed)
+    person_attr["ethnicity"] = []  # Do not infer or rank people by race/ethnicity.
     person_expand = expand_person_attributes(person_attr)
     pet_attr = extract_pet_attributes(processed)
     pet_expand = expand_pet_attributes(pet_attr)
     geo_candidates = extract_geo_candidates(processed)
+    query_text = normalize_text(processed)
+    wants_person = bool(person_attr["gender"] or person_attr["ethnicity"] or person_attr["count"]) or any(re.search(rf"(?<!机器){re.escape(t)}", processed) for t in PERSON_QUERY_TERMS)
+    wants_animal = bool(pet_attr["animal_type"] or pet_attr["breed"]) or any(t in processed for t in ["动物", "宠物", "猫", "狗", "鹿", "羊", "驴", "鸭", "鹅"])
+    wants_food = any(t.lower() in query_text for t in FOOD_TERMS)
+    wants_screenshot = any(t.lower() in query_text for t in SCREENSHOT_TERMS)
+    wants_object = any(t.lower() in query_text for t in NON_HUMAN_OBJECT_TERMS)
+    query_categories = []
+    if wants_person:
+        query_categories.append("人物")
+    if wants_animal:
+        query_categories.append("动物")
+    if wants_food:
+        query_categories.append("美食")
+    if wants_screenshot:
+        query_categories.append("截图")
+    if wants_object:
+        query_categories.append("物品")
 
     cities = set()
     landmarks = set()
     for word, flag in pseg.cut(processed):
         if flag == 'ns':
             cities.add(word)
-        elif flag == 'n' and len(word) >= 3:
+        elif flag in ('n', 'nz') and len(word) >= 3 and word not in NON_GEO_ENTITY_TERMS and any(suffix in word for suffix in GEO_SUFFIX_TERMS):
             landmarks.add(word)
 
     terms = {
@@ -167,6 +305,7 @@ def parse_query(user_query: str) -> Dict:
         "pet_count": pet_attr["count"],
         "pet_life_stage": pet_attr["life_stage"],
         "geo_candidates": geo_candidates,
+        "query_categories": query_categories,
     }
 
     entity_str = " ".join(entities)
@@ -212,11 +351,37 @@ def parse_query(user_query: str) -> Dict:
     return {"expanded_query": expanded_query, "terms": terms, "decomposition": decomposition}
 
 
-# ---------- 加载元数据 ----------
-with open("metadata_cache.json", "r", encoding="utf-8") as f:
-    metadata_raw = json.load(f)
+# ---------- 加载元数据（导入时不下载模型或建立向量） ----------
+def load_metadata(path=None):
+    selected = project_path(path) if path else metadata_path()
+    if not selected.is_file():
+        return {}
+    try:
+        with selected.open("r", encoding="utf-8-sig") as handle:
+            raw = json.load(handle)
+        if not isinstance(raw, dict):
+            raise ValueError("metadata must be an object keyed by image paths")
+        cleaned = {}
+        for key, value in raw.items():
+            if not isinstance(key, str) or not isinstance(value, dict):
+                continue
+            normalized = key.replace("\\", "/")
+            # Public demo data may only expose files inside the project.
+            resolved = project_path(normalized).resolve()
+            if os.getenv("ADAPHOTORET_LOCAL_MODE", "0") != "1" and not resolved.is_relative_to(BASE_DIR):
+                continue
+            if resolved.is_file():
+                cleaned[normalized] = value
+        return enrich_metadata(cleaned)
+    except (OSError, ValueError, TypeError) as exc:
+        warnings.warn(f"无法加载照片元数据 ({type(exc).__name__})；请检查本地配置。", RuntimeWarning)
+        return {}
 
-metadata = enrich_metadata(metadata_raw)
+
+metadata = load_metadata()
+image_paths = list(metadata)
+_resource_signature = None
+_resources = None
 
 
 def build_vector_index(metadata_dict):
@@ -225,56 +390,68 @@ def build_vector_index(metadata_dict):
         paths.append(path)
         geo_suffix = " ".join(info.get("_cities", []) + info.get("_landmarks", []))
         texts.append(f"{info.get('_search_text', '')} {geo_suffix}".strip())
-    print("正在为照片库生成向量...")
-    embeddings = model.encode(texts, normalize_embeddings=True).astype("float32")
+    if not texts:
+        return [], None
+    embeddings = get_model().encode(texts, normalize_embeddings=True).astype("float32")
     index = faiss.IndexFlatIP(embeddings.shape[1])
     index.add(embeddings)
-    print(f"向量库构建完成，共 {index.ntotal} 张照片。")
     return paths, index
 
 
-image_paths, vector_index = build_vector_index(metadata)
+def get_search_resources():
+    """Shared read-only model/index; no API client or visitor state is cached here."""
+    global _resource_signature, _resources
+    path = metadata_path()
+    signature = (str(path), path.stat().st_mtime_ns if path.exists() else None,
+                 os.getenv("ADAPHOTORET_LOCAL_MODE", "0"))
+    with _RESOURCE_LOCK:
+        if _resources is None or signature != _resource_signature:
+            current = load_metadata(path)
+            paths, index = build_vector_index(current)
+            metadata.clear()
+            metadata.update(current)
+            image_paths[:] = paths
+            _resources = {"model": get_model() if paths else None,
+                          "metadata": metadata, "image_paths": image_paths,
+                          "vector_index": index}
+            _resource_signature = signature
+        return _resources
+
+
+class _LazyModel:
+    def __getattr__(self, name):
+        return getattr(get_model(), name)
+
+
+class _LazyIndex:
+    def __getattr__(self, name):
+        index = get_search_resources()["vector_index"]
+        if index is None:
+            raise ValueError("照片库为空；请先准备照片与元数据。")
+        return getattr(index, name)
+
+
+# Backwards-compatible names for older local integrations.
+model = _LazyModel()
+vector_index = _LazyIndex()
 
 
 def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
     score = base_sim * 0.50
     trace = [("base_semantic_similarity", round(base_sim, 4), "向量语义相似")]
 
-    # ---------- 一级硬槽位 ----------
-    q_needs_pet = query_terms.get("needs_pet", False)
-    q_needs_person = (
-        bool(query_terms.get("person_count")) or
-        bool(query_terms.get("person_ethnicity")) or
-        bool(query_terms.get("person_gender"))
-    )
-
-    if q_needs_pet:
-        query_category = "宠物"
-    elif q_needs_person:
-        query_category = "人物"
-    else:
-        query_category = None
-
-    img_category = img_info.get("category", "")
-    if not img_category:
-        if "pet_details" in img_info:
-            img_category = "宠物"
-        else:
-            main = img_info.get("main_subjects", {})
-            if main.get("count", 0) > 0 and main.get("count_category") not in ["无", "单个物体"]:
-                img_category = "人物"
-            else:
-                img_category = "风景或其他"
-
-    if query_category and query_category != img_category:
-        score = -2.0
-        trace.append(("hard_category_mismatch", -2.0, f"查询需要{query_category}，但图片是{img_category}"))
-        compressed = 1.0 / (1.0 + math.exp(-3.0 * (score - 0.3)))
-        final = compressed * 100
-        if final > 99.0: final = 99.0
-        final = int(round(final))
-        final = max(0, min(99, final))
-        return final, trace
+    # ---------- 一级类别槽位 ----------
+    query_categories = query_terms.get("query_categories", [])
+    img_category = infer_category(img_info)
+    if query_categories:
+        normalized_query_categories = ["动物" if c == "宠物" else c for c in query_categories]
+        if img_category in normalized_query_categories:
+            score += 0.22
+            trace.append(("category_match", 0.22, f"类别匹配: {img_category}"))
+        elif not (img_category == "宠物" and "动物" in normalized_query_categories):
+            penalty = -0.65
+            score += penalty
+            trace.append(("category_mismatch", penalty, f"查询需要{','.join(normalized_query_categories)}，但图片是{img_category}"))
 
     doc_text = normalize_text(img_info.get("_search_text", ""))
     doc_cities = set(img_info.get("_cities", []))
@@ -349,11 +526,10 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
         score += 0.08; trace.append(("intent_structure_match", 0.08, "命中结构讲解意图"))
 
     # ---------- 人物属性 ----------
-    if not query_terms.get("needs_pet"):
+    if not query_terms.get("needs_pet") and img_category == "人物":
         people = img_info.get("main_subjects", {})
         if people:
             cnt = people.get("count", 0)
-            ethnicity = people.get("primary_ethnicity", "")
             person_count_q = query_terms.get("person_count", [])
             if person_count_q:
                 qc = person_count_q[0]
@@ -371,26 +547,13 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
                     trace.append(("person_count_mismatch", penalty, "人物数量不符"))
                 else:
                     trace.append(("person_count_match", 0.12, f"命中{qc}约束"))
-            ethnicity_q = query_terms.get("person_ethnicity", [])
-            if ethnicity_q:
-                qe = ethnicity_q[0]
-                matched = False
-                if ("西方/白种人" in qe and "白种人" in ethnicity) or \
-                   ("亚洲/黄种人" in qe and "黄种人" in ethnicity) or \
-                   ("非洲/黑种人" in qe and "黑种人" in ethnicity):
-                    score += 0.06; trace.append(("person_ethnicity_match", 0.06)); matched = True
-                elif "外国" in qe and ("白种人" in ethnicity or "黑种人" in ethnicity):
-                    score += 0.04; trace.append(("person_ethnicity_match", 0.04)); matched = True
-                if not matched:
-                    score -= 0.06; trace.append(("person_ethnicity_mismatch", -0.06))
-
     # ---------- 宠物匹配 ----------
-    if query_terms.get("needs_pet") and "pet_details" in img_info:
-        pet = img_info["pet_details"]
+    if query_terms.get("needs_pet") and ("pet_details" in img_info or "animal_details" in img_info):
+        pet = img_info.get("animal_details") or img_info.get("pet_details", {})
         q_animal = query_terms.get("pet_animal_type", [])
         if q_animal:
             img_animal = pet.get("animal_type", "")
-            if any(a in img_animal for a in q_animal) or any(a in pet.get("breed", "") for a in q_animal):
+            if "动物" in q_animal or any(a in img_animal for a in q_animal) or any(a in pet.get("breed", "") for a in q_animal):
                 score += 0.16; trace.append(("pet_animal_match", 0.16))
             else:
                 score -= 0.25; trace.append(("pet_animal_mismatch", -0.25))
@@ -438,17 +601,50 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
     # ---------- 实体关键词匹配 ----------
     query_entities = query_terms.get("extracted_entities", [])
     if query_entities:
+        geo_entity_terms = set(query_terms.get("cities", set())) | set(query_terms.get("landmarks", set())) | set(query_terms.get("geo_candidates", []))
         img_keywords = [normalize_text(k) for k in img_info.get("keywords", [])]
         img_desc = normalize_text(img_info.get("description", ""))
+        object_text = " ".join([
+            doc_text,
+            " ".join(img_keywords),
+            normalize_text(img_info.get("scene", "")),
+            normalize_text(img_info.get("category", "")),
+        ])
+        object_matched = []
+        object_missing = []
+        for obj, aliases in OBJECT_SYNONYM_MAP.items():
+            if obj in query_entities or obj in normalize_text(" ".join(query_entities)):
+                if any(alias in object_text for alias in aliases):
+                    object_matched.append(obj)
+                else:
+                    object_missing.append(obj)
+        if object_matched:
+            bonus = 0.45
+            score += bonus
+            trace.append(("object_core_match", bonus, f"命中核心对象: {', '.join(object_matched)}"))
+        if object_missing:
+            penalty = -0.35
+            score += penalty
+            trace.append(("object_core_missing", penalty, f"缺少核心对象: {', '.join(object_missing)}"))
+
         SYNONYM_MAP = {
             "沙滩排球": ["沙滩排球", "beach volleyball", "排球比赛", "海滩排球"],
+            "机器人": ["机器人", "机器人外观", "未来科技感", "机械人", "智能机器人", "robot"],
+            "人形机器人": ["机器人", "机器人外观", "未来科技感", "人形机器人", "robot"],
         }
         PET_NICKNAMES = {"小狗", "小猫", "小狗狗", "小猫咪", "狗子", "喵星人", "汪星人"}
         matched = []
+        meaningful_entities = []
         for e in query_entities:
             if e in PET_NICKNAMES: continue
+            if e in geo_entity_terms:
+                continue
             if e in PET_COLORS or e in PET_ANIMAL_TYPES or e in {"幼年", "成年", "老年", "证件照"}:
                 continue
+            if len(e) > 1 and e not in NON_GEO_ENTITY_TERMS:
+                meaningful_entities.append(e)
+            elif e in OBJECT_SYNONYM_MAP:
+                meaningful_entities.append(e)
             if e in img_desc or any(e in kw for kw in img_keywords):
                 matched.append(e)
             elif len(e) > 1 and e in SYNONYM_MAP:
@@ -470,16 +666,21 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
             bonus = min(bonus, 0.50)
             score += bonus
             trace.append(("entity_keyword_match", round(bonus, 3), f"命中实体: {', '.join(matched)}"))
+        elif meaningful_entities:
+            penalty = -0.12
+            score += penalty
+            trace.append(("entity_keyword_missing", penalty, f"未命中实体: {', '.join(meaningful_entities)}"))
 
     compressed = 1.0 / (1.0 + math.exp(-3.0 * (score - 0.3)))
     final = compressed * 100
     if final > 99.0: final = 99.0
     final = int(round(final))
     final = max(0, min(99, final))
-    return final, trace
+    return final, normalize_trace(trace)
 
 
-def build_reasoning_markdown(user_query, decomposition, top_results):
+def build_reasoning_markdown(user_query, decomposition, top_results, *, client=None, allow_environment=True, include_explanation=True):
+    allow_environment = allow_environment and os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
     lines = [f"### 查询「{user_query}」的可解释检索结果", ""]
     entities = decomposition.get("extracted_entities", [])
     if entities: lines.append(f"**提取实体**：{'、'.join(entities)}")
@@ -488,7 +689,6 @@ def build_reasoning_markdown(user_query, decomposition, top_results):
         parts = []
         if person_attr.get("count"): parts.append(f"数量：{','.join(person_attr['count'])}")
         if person_attr.get("gender"): parts.append(f"性别：{','.join(person_attr['gender'])}")
-        if person_attr.get("ethnicity"): parts.append(f"人种/国籍：{','.join(person_attr['ethnicity'])}")
         lines.append(f"**人物属性**：{'；'.join(parts)}")
     pet_attr = decomposition.get("pet_attributes", {})
     if any(pet_attr.values()):
@@ -509,20 +709,28 @@ def build_reasoning_markdown(user_query, decomposition, top_results):
         lines.append(" ".join(tags))
         evi = " | ".join([evidence for _, _, evidence in r["trace"]])
         lines.append(f"<small>📌 {evi}</small>")
-    try:
-        explanation = generate_explanation(user_query, top_results, metadata)
-        lines.append(""); lines.append("#### 🤖 智能推理说明"); lines.append(explanation)
-    except Exception as e:
-        print(f"生成解释失败: {e}")
+    if include_explanation:
+        try:
+            explanation = generate_explanation(
+                user_query, top_results, metadata,
+                client=client, allow_environment=allow_environment,
+            )
+            lines.append(""); lines.append("#### 🤖 智能推理说明"); lines.append(explanation)
+        except Exception:
+            lines.append("智能说明暂不可用；本地检索结果不受影响。")
     return "\n".join(lines)
 
 
-def search_photos(user_query: str):
+def search_photos(user_query: str, *, client=None, allow_environment=True, include_explanation=True):
+    allow_environment = allow_environment and os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
     if not user_query or not user_query.strip():
         return [None, None, None, "请输入检索描述。", [], []]
+    resources = get_search_resources()
+    if not resources["image_paths"]:
+        return None, None, None, "照片库为空；请先准备照片与元数据。", [], []
     parsed = parse_query(user_query)
     qv = model.encode([parsed["expanded_query"]], normalize_embeddings=True).astype("float32")
-    k = min(20, len(image_paths))
+    k = min(80, len(image_paths))
     sims, indices = vector_index.search(qv, k)
     results = []
     for i in range(k):
@@ -540,38 +748,41 @@ def search_photos(user_query: str):
     paths = [r["img_path"] for r in top3]
     while len(paths) < 3:
         paths.append(None)
-    report = build_reasoning_markdown(user_query, parsed["decomposition"], top3)
+    report = build_reasoning_markdown(
+        user_query, parsed["decomposition"], top3, client=client,
+        allow_environment=allow_environment, include_explanation=include_explanation,
+    )
     rows = []
     for r in top3:
         contrib = " | ".join([f"{name}:{delta:+.2f}" for name, delta, _ in r["trace"]])
         rows.append([r["img_path"], r["score"], contrib])
     return paths[0], paths[1], paths[2], report, rows, results[:3]
 
-def rank_all_photos(user_query: str) -> List[str]:
-    """
-    对全部照片按相关性得分降序排序，返回图片路径列表（得分仅内部使用，不返回）
-    与 search_photos 使用完全相同的打分逻辑（parse_query + model.encode + rerank_score）
-    """
-    if not user_query or not user_query.strip():
-        # 无查询时返回所有图片（保持原顺序）
-        return image_paths[:]
-    
-    parsed = parse_query(user_query)
-    qv = model.encode([parsed["expanded_query"]], normalize_embeddings=True).astype("float32")
-    
-    # 遍历所有图片，计算得分
-    all_results = []
-    for idx, p in enumerate(image_paths):
-        info = metadata[p]
-        # 获取该图片的向量（直接从索引重建，避免重复编码）
-        vec = vector_index.reconstruct(idx)
-        base_sim = float(qv @ vec)
-        sc, _ = rerank_score(parsed["terms"], info, base_sim)
-        all_results.append((p, sc))
-    
-    # 按得分降序排序
-    all_results.sort(key=lambda x: x[1], reverse=True)
-    return [p for p, _ in all_results]
+
+def rank_all_photos(query: str, top_k=None):
+    """Legacy API compatibility: semantic ranking without any external LLM call."""
+    if not query or not query.strip():
+        paths = list(load_metadata())
+        return paths if top_k is None else paths[:max(0, int(top_k))]
+    resources = get_search_resources()
+    paths = resources["image_paths"]
+    if not paths:
+        return []
+    count = len(paths) if top_k is None else min(len(paths), max(0, int(top_k)))
+    if count == 0:
+        return []
+    parsed = parse_query(query)
+    query_vector = resources["model"].encode([parsed["expanded_query"]], normalize_embeddings=True).astype("float32")
+    similarities, indices = resources["vector_index"].search(query_vector, count)
+    ranked = []
+    for position in range(count):
+        index = int(indices[0][position])
+        if index < 0:
+            continue
+        path = paths[index]
+        score, _ = rerank_score(parsed["terms"], resources["metadata"][path], float(similarities[0][position]))
+        ranked.append((path, score))
+    return [path for path, _ in sorted(ranked, key=lambda item: item[1], reverse=True)]
 
 
 # ==================== 界面 (Gradio) ====================
@@ -610,51 +821,62 @@ WELCOME_HTML = """
 """
 
 def switch_to_search():
+    import gradio as gr
     return gr.update(visible=False), gr.update(visible=True)
 
-with gr.Blocks(css=CUSTOM_CSS, title="AdaphotoRet - 记忆相册") as demo:
-    with gr.Column(visible=True, elem_classes="welcome-container") as welcome_block:
-        gr.HTML(WELCOME_HTML)
-        start_btn = gr.Button("✨ 开启记忆 ✨", elem_classes="start-btn", size="lg")
+def create_gradio_app():
+    """Optional legacy interface; importing the search core never starts Gradio."""
+    import gradio as gr
 
-    with gr.Column(visible=False, elem_classes="search-panel") as search_block:
-        gr.Markdown("## 📷 用自然语言寻找你的照片")
-        with gr.Row():
-            query_input = gr.Textbox(
-                label="输入描述",
-                placeholder="例如：一只成年蓝白猫；菜花田里的小狗；盯着镜头的梅花鹿",
-                scale=6
+    def search_for_gradio(query):
+        result = search_photos(query)
+        images = [resolve_photo_path(path) if path else None for path in result[:3]]
+        return (*images, *result[3:5])
+
+    with gr.Blocks(css=CUSTOM_CSS, title="AdaphotoRet - 记忆相册") as demo:
+        with gr.Column(visible=True, elem_classes="welcome-container") as welcome_block:
+            gr.HTML(WELCOME_HTML)
+            start_btn = gr.Button("✨ 开启记忆 ✨", elem_classes="start-btn", size="lg")
+
+        with gr.Column(visible=False, elem_classes="search-panel") as search_block:
+            gr.Markdown("## 📷 用自然语言寻找你的照片")
+            with gr.Row():
+                query_input = gr.Textbox(
+                    label="输入描述",
+                    placeholder="例如：一只成年蓝白猫；菜花田里的小狗；盯着镜头的梅花鹿",
+                    scale=6
+                )
+                search_btn = gr.Button("检索", variant="primary", scale=1, size="lg")
+
+            with gr.Row(equal_height=False):
+                with gr.Column(scale=1, min_width=200):
+                    top1_img = gr.Image(label="🥇 最佳匹配", type="filepath", height=380, elem_classes="image-card")
+                with gr.Column(scale=1, min_width=200):
+                    top2_img = gr.Image(label="🥈 第二候选", type="filepath", height=240, elem_classes="image-card")
+                with gr.Column(scale=1, min_width=200):
+                    top3_img = gr.Image(label="🥉 第三候选", type="filepath", height=240, elem_classes="image-card")
+
+            report_output = gr.Markdown(label="📋 可解释推理报告")
+            table_output = gr.Dataframe(
+                headers=["候选图片", "最终匹配度", "规则贡献分解"],
+                datatype=["str", "number", "str"],
+                label="📊 Top3 打分明细",
+                interactive=False,
+                wrap=True,
             )
-            search_btn = gr.Button("检索", variant="primary", scale=1, size="lg")
 
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=1, min_width=200):
-                top1_img = gr.Image(label="🥇 最佳匹配", type="filepath", height=380, elem_classes="image-card")
-            with gr.Column(scale=1, min_width=200):
-                top2_img = gr.Image(label="🥈 第二候选", type="filepath", height=240, elem_classes="image-card")
-            with gr.Column(scale=1, min_width=200):
-                top3_img = gr.Image(label="🥉 第三候选", type="filepath", height=240, elem_classes="image-card")
-
-        report_output = gr.Markdown(label="📋 可解释推理报告")
-        table_output = gr.Dataframe(
-            headers=["候选图片", "最终匹配度", "规则贡献分解"],
-            datatype=["str", "number", "str"],
-            label="📊 Top3 打分明细",
-            interactive=False,
-            wrap=True,
+        start_btn.click(fn=switch_to_search, outputs=[welcome_block, search_block])
+        search_btn.click(
+            fn=search_for_gradio,
+            inputs=query_input,
+            outputs=[top1_img, top2_img, top3_img, report_output, table_output]
         )
-
-    start_btn.click(fn=switch_to_search, outputs=[welcome_block, search_block])
-    search_btn.click(
-        fn=search_photos,
-        inputs=query_input,
-        outputs=[top1_img, top2_img, top3_img, report_output, table_output]
-    )
-    query_input.submit(
-        fn=search_photos,
-        inputs=query_input,
-        outputs=[top1_img, top2_img, top3_img, report_output, table_output]
-    )
+        query_input.submit(
+            fn=search_for_gradio,
+            inputs=query_input,
+            outputs=[top1_img, top2_img, top3_img, report_output, table_output]
+        )
+    return demo
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
+    create_gradio_app().launch(server_name="127.0.0.1", server_port=7860, share=False)

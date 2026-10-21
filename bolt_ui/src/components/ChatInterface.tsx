@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   Send,
-  ChevronDown,
-  ChevronUp,
   Brain,
   Zap,
   FileText,
@@ -12,7 +10,7 @@ import {
 } from 'lucide-react';
 import type { ChatMessage, Conversation } from '../types';
 
-const BACKEND_URL = 'http://172.25.104.83:8000';
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);

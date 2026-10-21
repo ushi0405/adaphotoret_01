@@ -1,67 +1,125 @@
 import os
-from openai import OpenAI
+from typing import Dict, List
 
-def get_deepseek_client():
-    api_key = os.environ.get("DEEPSEEK_API_KEY")
+def get_deepseek_client(api_key=None, *, allow_environment=True):
+    """Create a request-scoped client; never cache a visitor's credentials."""
+    if api_key is None and allow_environment:
+        api_key = os.getenv("DEEPSEEK_API_KEY", "")
+    api_key = (api_key or "").strip()
     if not api_key:
-        raise ValueError("请设置环境变量 DEEPSEEK_API_KEY")
-    return OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        raise ValueError("请先配置自己的 DeepSeek API 密钥")
+    from openai import OpenAI
+    return OpenAI(
+        api_key=api_key,
+        base_url="https://api.deepseek.com/v1",
+        timeout=30.0,
+        max_retries=1,
+    )
 
-def build_prompt(user_query, top_results, metadata):
+
+def safe_api_error(error):
+    """Do not expose provider exceptions, request headers, or secret values."""
+    status = getattr(error, "status_code", None)
+    if status in (401, 403):
+        return "API 密钥无效或没有权限，请在侧边栏检查自己的密钥。"
+    if status == 402:
+        return "API 账户余额不足，请检查自己的服务账户。"
+    if status == 429:
+        return "API 请求受限或额度不足，请稍后重试。"
+    return "API 暂时不可用，请检查网络、密钥和账户额度后重试。"
+
+
+def generate_explanation(
+    user_query: str,
+    top_results: List[Dict],
+    metadata: Dict,
+    *,
+    client=None,
+    api_key=None,
+    allow_environment=True,
+) -> str:
+    if not top_results:
+        return "无结果，无法生成解释。"
+
+    info_text = ""
+    for idx, r in enumerate(top_results, start=1):
+        img_path = r["img_path"]
+        img_info = metadata.get(img_path, {})
+        desc = img_info.get("description", "无描述")
+        scene = img_info.get("scene", "未知场景")
+        keywords = img_info.get("keywords", [])
+        people = img_info.get("main_subjects", {})
+        pet = img_info.get("pet_details", {})
+        category = img_info.get("category", "")
+        is_pet = (category == "宠物") or bool(pet)
+
+        trace = r["trace"]
+        matched_rules = [f"{rule}: {evidence}" for rule, delta, evidence in trace if delta > 0]
+        mismatched_rules = [f"{rule}: {evidence}" for rule, delta, evidence in trace if delta < 0]
+
+        info_text += f"""
+【图片 {idx}】路径：{img_path}
+场景：{scene}
+描述：{desc}
+关键词：{', '.join(keywords) if keywords else '无'}
+"""
+        if is_pet:
+            pet_breed = pet.get("breed", "未知")
+            pet_color = pet.get("coat_color", [])
+            pet_life = pet.get("life_stage", "未知")
+            info_text += f"""宠物信息：品种={pet_breed}，毛色={pet_color}，年龄={pet_life}
+"""
+        else:
+            if people:
+                cnt = people.get("count", 0)
+                cnt_cat = people.get("count_category", "未知")
+                eth = people.get("primary_ethnicity", "未知")
+                info_text += f"""人物信息：数量={cnt_cat}（实际{cnt}人），人种={eth}
+"""
+
+        info_text += f"""匹配的规则：{matched_rules if matched_rules else '无'}
+不匹配的规则：{mismatched_rules if mismatched_rules else '无'}
+得分：{r['score']}
+"""
+
     prompt = f"""你是一个图像检索系统的可解释性助手。用户查询是："{user_query}"。
 
-系统返回了 Top3 候选图片，请按以下流程输出：
-
-## 第一部分：思考过程
-请用一段文字描述你是如何解析用户查询的，包括：
-- 提取了哪些关键实体（如地点、菜品、宠物品种等）
-- 识别了哪些意图（如地理约束、人物数量、宠物特征等）
-- 整体检索策略（例如优先匹配地理信息，其次语义相似等）
-
-## 第二部分：图片解释
-根据每张图片的元数据和匹配规则，必须用中文生成解释。先概括整体检索情况，然后逐张图片说明。
-
-### 格式要求：
-- 禁止使用任何 Markdown 标题符号（如 #、##、###）或粗体（**）来标记图片编号。
-- 每张图片的描述格式必须为：`图片X（得分Y）：` 后直接接内容，冒号为中文冒号。
-- 不要添加额外的空行或分割线。
-- 每张图片概述的最少字数不得少于100字。
-- 解释必须客观、专业，避免重复。
-
-### 内容要求：
-1. 首先概括整体检索情况（例如共检索到多少相关图片，主要匹配依据）。
-2. 对每张图片，详细说明：
-   - 选择该图片的原因（命中哪些规则：语义相似、地理匹配、实体关键词、宠物属性等）
-   - 可能存在的不足（尤其是排名靠后的图片，如未命中地理信息、语义偏差等）
-3. **特别注意**：
+系统返回了 Top3 候选图片，请根据每张图片的元数据和匹配规则，必须用中文生成一段约150字的解释。
+要求：
+1. 首先概括整体检索情况。
+2. 对每张图片，详细说明选择图片的原因，以及可能存在的不足（尤其对于排名靠后的图片）。
+3. 语气客观、专业，避免重复。
+4. 每张图片概述的最少字数不得少于100。
+5. **特别注意**：
    - 如果图片包含“宠物信息”，则**严禁**在解释中提及任何人物数量、人种或“一群人”的相关描述，仅围绕宠物特征展开。
-   - 本系统中，“一群人”的定义是 4人及以上，该规则仅适用于人物照片。
+   - 本系统中，“一群人”的定义是 **4人及以上**，该规则仅适用于人物照片，不得用于宠物照片。
+6. **格式要求（非常重要）**：
+   - 禁止使用任何 Markdown 标题符号（如 `#`、`##`、`###`）或粗体（`**`）来标记图片编号。
+   - 每张图片的描述必须用普通文本，格式为：`图片X（得分Y）：` 后直接接内容，冒号为中文冒号。
+   - 不要添加额外的空行或分割线。
+   - 图片描述之间用正常换行分隔即可。
 
-### 检索结果数据：
-"""
-    for idx, r in enumerate(top_results, 1):
-        img_path = r['img_path']
-        score = r['score']
-        info = metadata.get(img_path, {})
-        desc = info.get('description', '无描述')
-        category = info.get('category', '未知')
-        trace_str = " | ".join([f"{rule}:{delta}" for rule, delta, _ in r['trace'] if abs(delta) > 0.01])
-        prompt += f"{idx}. 图片：{img_path}\n   得分：{score}\n   类别：{category}\n   描述：{desc}\n   匹配线索：{trace_str}\n"
-    prompt += "\n请严格按照上述格式要求输出，先输出【思考过程】，然后输出图片解释。"
-    return prompt
+以下是图片信息：
+{info_text}
 
-def generate_explanation(user_query, top_results, metadata):
-    client = get_deepseek_client()
-    prompt = build_prompt(user_query, top_results, metadata)
+请输出解释文本（不要包含其他无关内容，严格按照格式要求）："""
+
+    owns_client = client is None
     try:
+        if owns_client:
+            client = get_deepseek_client(api_key, allow_environment=allow_environment)
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
+            temperature=0.3,
             max_tokens=800,
-            stream=False,
         )
-        explanation = response.choices[0].message.content
-        return explanation.encode('utf-8').decode('utf-8')
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"解释生成失败：{str(e)}"
+        return "解释生成失败：" + safe_api_error(e)
+    finally:
+        if owns_client and client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass

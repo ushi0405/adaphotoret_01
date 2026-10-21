@@ -1,17 +1,26 @@
-# download_model.py
-import os
-from sentence_transformers import SentenceTransformer
+"""Download the pinned Apache-2.0 multilingual retrieval model (no API key)."""
+import argparse
+from pathlib import Path
 
-# 设置镜像源，加速下载
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+MODEL_ID = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_REVISION = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+BASE_DIR = Path(__file__).resolve().parent
 
-print("正在从 Hugging Face 下载完整模型...")
-# 下载模型（会自动获取所有需要的文件，包括 modules/ 子目录）
-model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
-# 保存到本地文件夹（推荐放在项目目录下，命名为 local_model）
-save_path = "./local_model"
-print(f"正在保存模型到本地：{save_path}")
-model.save_pretrained(save_path)
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default="local_model")
+    args = parser.parse_args(argv)
+    output = Path(args.output).expanduser()
+    if not output.is_absolute():
+        output = BASE_DIR / output
+    from sentence_transformers import SentenceTransformer
+    print(f"Downloading {MODEL_ID} at pinned revision {MODEL_REVISION}...")
+    model = SentenceTransformer(MODEL_ID, revision=MODEL_REVISION,
+                                trust_remote_code=False, device="cpu")
+    model.save_pretrained(str(output))
+    print(f"Model saved to {output}")
 
-print("模型下载并保存成功！")
+
+if __name__ == "__main__":
+    main()

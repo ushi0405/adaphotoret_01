@@ -79,7 +79,7 @@ def render_feedback_section(
     if choice_index != system_best_index:
         st.warning("您选择的最佳照片与系统判定不同，我们将优化理解。")
         st.markdown("**② 是哪一项匹配规则不准确？**（可多选）")
-        
+
         # 取出系统最佳图片的加分项（delta > 0）
         system_best_trace = top_results[system_best_index].get("trace", [])
         positive_rules = [

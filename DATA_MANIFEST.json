@@ -1,0 +1,405 @@
+{
+  "description": "Full user-authorized Drive photo corpus, 66 canonical originals; one identical duplicate upload collapsed by path.",
+  "photo_count": 66,
+  "photo_bytes": 102321341,
+  "metadata_file": "metadata.demo.json",
+  "metadata_sha256": "e6e34282e7a98e63d59b3e4a6e37397ed98217baaf6da4431059593bb0b8970b",
+  "files": [
+    {
+      "path": "data/life/life_01.jpg",
+      "bytes": 128998,
+      "sha256": "77eaea792a9a9430680fa0d8da71efdd0754276cc6125277cbd1a23f030cb2a6",
+      "git_blob_sha1": "f545fcc85f4e8e0bb1835ebebb05f2d1a4d9e880"
+    },
+    {
+      "path": "data/life/life_02.jpg",
+      "bytes": 363975,
+      "sha256": "78f4a74f430a52bf799f70fa62e7ce25c3fd11ca15c344e598260162e0ad924b",
+      "git_blob_sha1": "427e3a3105e83b23709da5886eaf828e55b859c5"
+    },
+    {
+      "path": "data/life/life_03.jpg",
+      "bytes": 148488,
+      "sha256": "fb29c9baf20e2a9c7cbd164a3b2a633eca74778ebd70df0cb0240f8e1535b1f4",
+      "git_blob_sha1": "94791213de71243236ae51bde6d74dd087fc3590"
+    },
+    {
+      "path": "data/life/life_04.jpg",
+      "bytes": 414843,
+      "sha256": "d6697f204ecc549cb4384e511e0350c97231bbe129b2469dc96ea9ea60a7eae2",
+      "git_blob_sha1": "d355f397df05ef79d2d0c1d0862cfdb2804a326c"
+    },
+    {
+      "path": "data/life/life_05.jpg",
+      "bytes": 196315,
+      "sha256": "16dd8a2f7b7c4e45f3c112308171bbd87bfc5cea211875c12f6f36e03e9aac3d",
+      "git_blob_sha1": "e0826649de61f2eb5e3f6ad5ae28d77349b34f3b"
+    },
+    {
+      "path": "data/life/life_06.jpg",
+      "bytes": 357975,
+      "sha256": "1fca76f9bbe47da31c25e275d123ba2dbbe9fe7b8b814879891bec2df757a022",
+      "git_blob_sha1": "be5f3c0490dbe262c8e30a6c969048b65c78429b"
+    },
+    {
+      "path": "data/life/life_07.jpg",
+      "bytes": 681432,
+      "sha256": "430a7cf2428f3a1b34b4b06a4051b3eed96c586158d9cc53db7a80f10bb0b57b",
+      "git_blob_sha1": "d2c6f4f610d20f0bf33ceeed2cc6498342b93f5c"
+    },
+    {
+      "path": "data/life/life_08.jpg",
+      "bytes": 303742,
+      "sha256": "7282053a21dd496a6d24fafaa35d8ca667a38039529ff2e883765688e28f4035",
+      "git_blob_sha1": "4160a4ae91160d6d2d6211948411ab701866d4fb"
+    },
+    {
+      "path": "data/life/life_09.jpg",
+      "bytes": 473247,
+      "sha256": "723ee3373b778fd631cd991135fca0f9f830f5e67dcfd689814e8b7ce79881a1",
+      "git_blob_sha1": "c118d43370efb24b66cf010b714f35830126314b"
+    },
+    {
+      "path": "data/life/life_10.jpg",
+      "bytes": 509039,
+      "sha256": "65f533a1d2f181c63929ccd4353e76d00b1a1ce11a0b9be14b9d572bccc55885",
+      "git_blob_sha1": "8e4aa1bc9fcfdfee154563a0e8340ea72cc113bf"
+    },
+    {
+      "path": "data/life/life_11.jpg",
+      "bytes": 555962,
+      "sha256": "a8265f0bc4878d73affbcd0a642319812a7c06403481dff1214ff49f2eab0766",
+      "git_blob_sha1": "d44bafba27eff1b9d832caf4afebe19f177f2816"
+    },
+    {
+      "path": "data/life/life_12.jpg",
+      "bytes": 332799,
+      "sha256": "fffd940dfc95f976e5cc1f31ff44672c6d58dcde9e06fe641df92a66427d573e",
+      "git_blob_sha1": "7739eb2bf0b30900b2cf073079595da134f9cd94"
+    },
+    {
+      "path": "data/pet/pet_01.jpg",
+      "bytes": 470216,
+      "sha256": "248de97901681b64d2857a9478722f78dcfcb0e26aa4c204f832fdf743e872e3",
+      "git_blob_sha1": "5020a6f3b234003dd216eb0ecb3bd3c2cb621352"
+    },
+    {
+      "path": "data/pet/pet_02.jpg",
+      "bytes": 97712,
+      "sha256": "6b9cd0bcceec20719d5971ba27dc470d31f2022cc90b5c63e74d6c995202817e",
+      "git_blob_sha1": "02fd58714656e5f6574b3d6cdec8bce7eebc58ad"
+    },
+    {
+      "path": "data/pet/pet_03.jpg",
+      "bytes": 322933,
+      "sha256": "16127600e9defb195a7ee00391d08ed7ead840caa7bb9a87380643f4d6bbb166",
+      "git_blob_sha1": "451acfe7345e54d32f681f42d26f39cdbba389f8"
+    },
+    {
+      "path": "data/pet/pet_04.jpg",
+      "bytes": 185413,
+      "sha256": "b1240bbc3d4a3349ed54681b7cd304d5da531da937d002e5e309b870d345e4e6",
+      "git_blob_sha1": "c1226831627084c57b32657c8fedea278867df80"
+    },
+    {
+      "path": "data/pet/pet_05.jpg",
+      "bytes": 217926,
+      "sha256": "ce636807e8cbf2dc82ab0be189a6baf1cb56f5964c2e22ace2576410073cbeb2",
+      "git_blob_sha1": "2a6457ad90e34f4f26c934bc0b9733d333e31bc8"
+    },
+    {
+      "path": "data/pet/pet_06.jpg",
+      "bytes": 100208,
+      "sha256": "c398671cc0fe3fe3a77e385971e60789db4a1c24c16b43e5e68301bfc54226f0",
+      "git_blob_sha1": "dacf29d62f7b803a5d0a62434d7fb2d045208526"
+    },
+    {
+      "path": "data/pet/pet_07.jpg",
+      "bytes": 302413,
+      "sha256": "b19200ee38ae549202c197ee8076212cc71a9d56f9db900c9e1d6ba93b5370b1",
+      "git_blob_sha1": "20877dc8281f7a7464b6b83f15ca55c903370453"
+    },
+    {
+      "path": "data/pet/pet_08.jpg",
+      "bytes": 222852,
+      "sha256": "f44bc7a9edb3e5936051d95b9670d18c203a1cb69a1652c256169b7e1db733fe",
+      "git_blob_sha1": "f5ca768440a504ef750c16dfd5becd1852d152d3"
+    },
+    {
+      "path": "data/pet/pet_09.jpg",
+      "bytes": 145463,
+      "sha256": "58357527115396e95b76ca83f42e8e5188e89bdf39907fe9b0a4c3f2bc820053",
+      "git_blob_sha1": "0a9f8ca68179084afdf3dfd0debe8477ca476db0"
+    },
+    {
+      "path": "data/pet/pet_10.jpg",
+      "bytes": 122952,
+      "sha256": "69ab84b18124bd22407e037ea4bd84c267a9fe1b72baa9e4d0b9707a22ef8bda",
+      "git_blob_sha1": "619072e4791e2f1ae6f791d95236f9a314b30889"
+    },
+    {
+      "path": "data/pet/pet_11.jpg",
+      "bytes": 177311,
+      "sha256": "209463726c1f81aed3a9740b6a81ce0b5837ed48f79bfc3f2174228766f9e62c",
+      "git_blob_sha1": "b61f2b56f04824246a474595ff4de0c96bcce2ed"
+    },
+    {
+      "path": "data/pet/pet_12.jpg",
+      "bytes": 160689,
+      "sha256": "f3d6e95d96a3618fd6f56d60d540786f65e9e1e8e744bca638aea0650ab1f9df",
+      "git_blob_sha1": "ab2710c022a9ed640ea077bdb315c6190fa929a2"
+    },
+    {
+      "path": "data/pet/pet_13.jpg",
+      "bytes": 105334,
+      "sha256": "939dcf005b8b2c8d7f8ed8bd5517a7c29c702d3b952386931fe6b0951130cc42",
+      "git_blob_sha1": "a9cc88ca58546b048b9b1b58785524f1ba396682"
+    },
+    {
+      "path": "data/pet/pet_14.jpg",
+      "bytes": 401661,
+      "sha256": "5f20d9ba3aafd666f8447c50d24aa685d2afd111d9d75b27d1a5df5effe005fe",
+      "git_blob_sha1": "afb456e7d4e13bc4024a17a969fb7995989e150d"
+    },
+    {
+      "path": "data/travel/travel-28.HEIC",
+      "bytes": 1072862,
+      "sha256": "a2d3ba51c2cf05eb4d9645f6f58fe0aa14468b976b2a6ff19cdb924c05dce5ba",
+      "git_blob_sha1": "d540b440edd80a580a5160e49dabc70d30b2a8c8"
+    },
+    {
+      "path": "data/travel/travel_01.HEIC",
+      "bytes": 3518571,
+      "sha256": "ee016e937a827da94758c42b66159be2cd102de488b867e39774c3d59fb8acc0",
+      "git_blob_sha1": "2d891b8d5142cf6845e2bbe5d6a625d91bdc550f"
+    },
+    {
+      "path": "data/travel/travel_02.HEIC",
+      "bytes": 3993961,
+      "sha256": "e772968a9766cd76cf37dd72546255104b8769c76b2f475a0370ec3c7be38a41",
+      "git_blob_sha1": "76ecdf387fc68515081b35217f1a84b1fd6b5c94"
+    },
+    {
+      "path": "data/travel/travel_03.HEIC",
+      "bytes": 4620461,
+      "sha256": "ea8f8f4b97c5b5c43ebd45643f26e4de7109eb2833e295db981988e6b51ff5bf",
+      "git_blob_sha1": "24c7b6de681b29e6463e5797424539047da878c3"
+    },
+    {
+      "path": "data/travel/travel_04.HEIC",
+      "bytes": 1261673,
+      "sha256": "8e6e6bdab70d109419bc6956b6f457b568a7be3c4ea452cf8fb887cc8470c63a",
+      "git_blob_sha1": "fb997631c00590d2a44ca6511928b4fddbe8913a"
+    },
+    {
+      "path": "data/travel/travel_05.HEIC",
+      "bytes": 2046176,
+      "sha256": "35fad059b176ff0b3a6bc969088e66422e1afbb43cbdc26e038730e959bbafef",
+      "git_blob_sha1": "8ef2d49626c6d6078533156cb35025c6930f7a7f"
+    },
+    {
+      "path": "data/travel/travel_06.HEIC",
+      "bytes": 2283753,
+      "sha256": "7fe73ed10b31d899ec7a0b32adc75a631c7cbb025ee62ef5f945f71f7d1de82e",
+      "git_blob_sha1": "09ea7ac54481ff55a2a5495e4777d498c796b5c0"
+    },
+    {
+      "path": "data/travel/travel_07.HEIC",
+      "bytes": 3917598,
+      "sha256": "b70e3318ff4715f6ae3a856e2ae8c7176bf4a04867f13507cd2559752f745cc8",
+      "git_blob_sha1": "14deb51942d27df036782b1605861a2f6223960d"
+    },
+    {
+      "path": "data/travel/travel_08.HEIC",
+      "bytes": 3135909,
+      "sha256": "ea67f5bec0aa19aacdeeff9d4d3fa2d7b7d6559097558332fc457e09182765e9",
+      "git_blob_sha1": "f2f1eb9d0f5fe77558d4a3858de3dff952a8b857"
+    },
+    {
+      "path": "data/travel/travel_09.HEIC",
+      "bytes": 1883866,
+      "sha256": "e9f2d9bd758b72622e3f4ba9bad31944df03a0163b7c40c0c1f4cb1800394dcb",
+      "git_blob_sha1": "ec38efc90cd9034c609425ce75d07bada64f5144"
+    },
+    {
+      "path": "data/travel/travel_10.HEIC",
+      "bytes": 2089027,
+      "sha256": "64bb0a770e6c6594c5bbc73ce4ebf38ff47fbd36d8bbe8830fa825f05324b9b6",
+      "git_blob_sha1": "276a763a7891a3df239acb588656c97577f0061c"
+    },
+    {
+      "path": "data/travel/travel_11.HEIC",
+      "bytes": 2005800,
+      "sha256": "3035a8e8f58e47b454e33198a9b93fd990bd53ceab9606f692788d074176701b",
+      "git_blob_sha1": "bcb7dffb154cfce167f5b2a9a60c62bff7bccd3f"
+    },
+    {
+      "path": "data/travel/travel_12.HEIC",
+      "bytes": 1099182,
+      "sha256": "e8993db32f2d06a42d5198361d4a3c7053c3764a0dbea437649e22dca9c01e62",
+      "git_blob_sha1": "745a65d6b096a3980bf2bf0c504ce55127909759"
+    },
+    {
+      "path": "data/travel/travel_13.HEIC",
+      "bytes": 1040580,
+      "sha256": "01db38bed9611b042417d7427b6236c5d64a6dc85b8ccc258b4700757a57a2f4",
+      "git_blob_sha1": "33bb53b34f14a884004cc127418f961a3f9d0b26"
+    },
+    {
+      "path": "data/travel/travel_14.HEIC",
+      "bytes": 2355925,
+      "sha256": "7e7470474cf9311f952135e46ca44dce197fc340780b8dfd0c551925e3312445",
+      "git_blob_sha1": "630764c14ab492eb3ba3ae1141e58e31ac9f5a31"
+    },
+    {
+      "path": "data/travel/travel_15.HEIC",
+      "bytes": 1329826,
+      "sha256": "552442db9a0e9bab1d7b2d714c8db67f71fc8c4f8cee1d5d08915e4870df25be",
+      "git_blob_sha1": "b9fbdd9ecb4173936dc33c64e63e07d634749221"
+    },
+    {
+      "path": "data/travel/travel_16.HEIC",
+      "bytes": 2116798,
+      "sha256": "424c8d204a5f7491ac5e8b26031e941054d4a9710a74eba4cdd465997085763f",
+      "git_blob_sha1": "8e8a707e3ae54920cffdb3cef89985df21be9153"
+    },
+    {
+      "path": "data/travel/travel_17.HEIC",
+      "bytes": 1527029,
+      "sha256": "9a53cb40a6b7c6510d4884acd0bfd79c21ae8ff188e8833d25db353a965fc1a1",
+      "git_blob_sha1": "15cf1583da96a28f43ef47e5bfab1d9f9e58b241"
+    },
+    {
+      "path": "data/travel/travel_18.HEIC",
+      "bytes": 1929618,
+      "sha256": "246075fdc38d5689f3c462a1bbee579aff008b8e69c6d626eb8c54a2d815a12f",
+      "git_blob_sha1": "2176ac4cd7b19b5fe40836143ebb4e2007cc7afb"
+    },
+    {
+      "path": "data/travel/travel_19.HEIC",
+      "bytes": 2493048,
+      "sha256": "c53d8092009794fa512cff47a267d12056b33e646ecc67475b8ba9e421d95fb4",
+      "git_blob_sha1": "f660c99a1088ba92e232dc5ea86d2b6415595384"
+    },
+    {
+      "path": "data/travel/travel_20.HEIC",
+      "bytes": 3766195,
+      "sha256": "2e9c65cbc807c77e45b26fbf3b376635acb2d6fe6f24b67125135081090ac62d",
+      "git_blob_sha1": "55315fffdcecb59b83161331f6374e792adcbe3c"
+    },
+    {
+      "path": "data/travel/travel_21.HEIC",
+      "bytes": 1024854,
+      "sha256": "1a8095a63e07067771af6be0ec0ca0453d2699added72846d46a76ee9c944c80",
+      "git_blob_sha1": "e9274699ea2092ca21e27c6dad4c442009339a18"
+    },
+    {
+      "path": "data/travel/travel_22.HEIC",
+      "bytes": 3708253,
+      "sha256": "47f96d2635581f57fe6fa7fb4f94aab2b59b6d0f2da242de4db29d35a3327c10",
+      "git_blob_sha1": "bcf6f84f36094388ab23ac476b56a5e297669dc5"
+    },
+    {
+      "path": "data/travel/travel_23.HEIC",
+      "bytes": 2639293,
+      "sha256": "9aa697394f5530b34b8f823e4353fb4a0dad923e5075b536b691b493a85e092b",
+      "git_blob_sha1": "9f56d70833fa6f37a9d8c21b8c369c7c470dacd6"
+    },
+    {
+      "path": "data/travel/travel_24.HEIC",
+      "bytes": 5163834,
+      "sha256": "1c4084ed2227fe95e945482d5956f92f0c87ec97a171dbbbdcad51d50801f5d5",
+      "git_blob_sha1": "00bfc81bca98e52b1d15b34e16fc6d2551b4ab65"
+    },
+    {
+      "path": "data/travel/travel_25.HEIC",
+      "bytes": 1754858,
+      "sha256": "26af930dec615e8e9ab92d3f6b06957cc69f9228cbc70371e32b256a6fa89406",
+      "git_blob_sha1": "0d2e5f00d1e8bb8f230041f1a2bb814a186ad0b9"
+    },
+    {
+      "path": "data/travel/travel_26.HEIC",
+      "bytes": 2009625,
+      "sha256": "43a1115d66feaffa25012dabc1ff04e78643850e4454d917aba628fd5b5cab6a",
+      "git_blob_sha1": "27e312f296ff950d41b2eb50fab366f1894a3360"
+    },
+    {
+      "path": "data/travel/travel_27.HEIC",
+      "bytes": 1547472,
+      "sha256": "f2ca6ebc0a1d2c36886cae288f4394cc3b302480cb9459679084f56cfca14d1b",
+      "git_blob_sha1": "5a46542fba4bc5852ff2542b3278b06255545f5a"
+    },
+    {
+      "path": "data/travel/travel_29.HEIC",
+      "bytes": 1047965,
+      "sha256": "9120b8a7d67c8161ffde3d1716331ce1ee148bfa2c9455657241f5a4ce04a2c5",
+      "git_blob_sha1": "bd0c291b017bdd5d238cf92e9fb837f809de94a9"
+    },
+    {
+      "path": "data/travel/travel_30.HEIC",
+      "bytes": 1644224,
+      "sha256": "bf962ca931ec192be7edf595a848b2e22ef4a5d44b3930534e45edc6891d24be",
+      "git_blob_sha1": "d4dc6c5fc7e202711e679bee5ccae4ec2bd7c41b"
+    },
+    {
+      "path": "data/travel/travel_31.HEIC",
+      "bytes": 1835111,
+      "sha256": "ad8453de2ab7bee89863e970f1e1e982692ea5f4589e236070a6b1985373dd2f",
+      "git_blob_sha1": "3b53dba834f04a0656efb550aedb4f02715db99b"
+    },
+    {
+      "path": "data/travel/travel_32.HEIC",
+      "bytes": 866225,
+      "sha256": "e8cb0dd6f5e77ab5be4e29736b7dd63c7de72a1abdab9869cbe877476ec90089",
+      "git_blob_sha1": "c46c3ec971741d330aaaeafcd306b2f972289f24"
+    },
+    {
+      "path": "data/travel/travel_33.HEIC",
+      "bytes": 1272468,
+      "sha256": "a5d21f97ce0321df9eb6025d302392a4cea8a0579a566b45e6c5ff13e02b6dba",
+      "git_blob_sha1": "93625e659f3a183ea37cf133e29488de805027a3"
+    },
+    {
+      "path": "data/travel/travel_34.HEIC",
+      "bytes": 5086621,
+      "sha256": "1db5ec7cb239d329aa2a6b873237c3123409eb3de7e9441bf2fb447063f0e81c",
+      "git_blob_sha1": "832bc1ebf0e539ba13064ea0140595fa41c780ac"
+    },
+    {
+      "path": "data/travel/travel_35.HEIC",
+      "bytes": 5592907,
+      "sha256": "ffd3ef90cce847e7fe25affaabb7dbc7a84df4736b54bcfa35ac1967905479fa",
+      "git_blob_sha1": "9984cbdc06213d849667abcb6cbdc31a1ac5fa19"
+    },
+    {
+      "path": "data/travel/travel_36.HEIC",
+      "bytes": 2523105,
+      "sha256": "7b1f9d0b0b68049e1c550d5ac8d82b065acc26cf2ba69e4482c4fec7c8ef464e",
+      "git_blob_sha1": "d47bca9be2728ca84f5f5fdafcf2402b81e13f70"
+    },
+    {
+      "path": "data/travel/travel_37.HEIC",
+      "bytes": 2323374,
+      "sha256": "70357f08ae45db866de7f7addaf600094928dec21211cac475c540f63d18a9ef",
+      "git_blob_sha1": "e474086d634dc3217d4e49993fa40a1b19e9f80c"
+    },
+    {
+      "path": "data/travel/travel_38.HEIC",
+      "bytes": 1935880,
+      "sha256": "24c52a8d5ecb22caceea4eef8983d8f71650253977db5618c81be9bb4d65caad",
+      "git_blob_sha1": "6b2089f2d3cd6c6812a18cb7877f14cf89409308"
+    },
+    {
+      "path": "data/travel/travel_39.HEIC",
+      "bytes": 2488345,
+      "sha256": "72ca90764c2be447214bf3900ad12479aba653fe0360dbd7d7970f3055598ac7",
+      "git_blob_sha1": "41dcb32c30229e8f7c12bc94ff8a9c6ad5b4e1a6"
+    },
+    {
+      "path": "data/travel/travel_40.HEIC",
+      "bytes": 869171,
+      "sha256": "27ee7e179249d3859bcf4f12cadfedd02e37ed68ebcf385e40c2351afcccacde",
+      "git_blob_sha1": "6b77c33d2f174ffe78bc0981c7d56a05e019ac30"
+    }
+  ]
+}
