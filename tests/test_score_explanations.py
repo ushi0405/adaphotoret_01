@@ -7,7 +7,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import llm_explainer as explainer
+import llm_explainer
+import score_report as explainer
 from test_ui import ui_functions
 from test_clarification_policy import Dialogue, QUESTIONS
 
@@ -128,8 +129,8 @@ def test_report_appends_only_keeps_every_numeric_byte_order_and_identity():
 
 def test_legacy_report_uses_only_its_saved_query_score_trace():
     report = saved_report()
-    with patch.object(explainer, "get_deepseek_client", side_effect=AssertionError("no provider")), \
-         patch.object(explainer, "generate_explanation", side_effect=AssertionError("no LLM")):
+    with patch.object(llm_explainer, "get_deepseek_client", side_effect=AssertionError("no provider")), \
+         patch.object(llm_explainer, "generate_explanation", side_effect=AssertionError("no LLM")):
         result = explainer.ensure_score_explanations(report)
     assert result == explainer.ensure_score_explanations(report, QUERY, RESULTS)
     assert "最终得分82" in result
@@ -190,8 +191,8 @@ def test_search_report_no_key_no_llm_and_no_retrieval_changes(client):
     report, table = saved_report(), [[r["img_path"], r["score"], "existing"] for r in RESULTS]
     search = Mock(return_value=(*(r["img_path"] for r in RESULTS), report, table, RESULTS))
     scope = ui_functions("search_photos_tool", search_photos=search)
-    with patch.object(explainer, "generate_explanation", side_effect=AssertionError("malformed/failed LLM never needed")), \
-         patch.object(explainer, "get_deepseek_client", side_effect=AssertionError("no key")):
+    with patch.object(llm_explainer, "generate_explanation", side_effect=AssertionError("malformed/failed LLM never needed")), \
+         patch.object(llm_explainer, "get_deepseek_client", side_effect=AssertionError("no key")):
         result = scope["search_photos_tool"](QUERY, client)
     search.assert_called_once_with(QUERY, client=client, allow_environment=False, include_explanation=False)
     assert [result[f"top{i}"] for i in range(1, 4)] == [r["img_path"] for r in RESULTS]

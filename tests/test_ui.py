@@ -13,6 +13,7 @@ from io import BytesIO
 from PIL import Image, ImageOps, UnidentifiedImageError
 import unittest
 from photo_query import build_photo_query
+from score_report import ensure_score_explanations
 from clarification_policy import clarification_questions, must_return_results, concise_question
 from unittest.mock import Mock, patch
 
@@ -34,7 +35,7 @@ def ui_functions(*names, **variables):
              "clarification_questions": clarification_questions,
              "must_return_results": must_return_results, "concise_question": concise_question,
              "safe_api_error": EXPLAINER.safe_api_error,
-             "ensure_score_explanations": EXPLAINER.ensure_score_explanations, **variables}
+             "ensure_score_explanations": ensure_score_explanations, **variables}
     exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
     return scope
 
@@ -289,6 +290,17 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertFalse(app.checkbox(key="deepseek_consent").value)
         self.assertTrue(app.chat_input[0].disabled)
         self.assertEqual(list(app.exception), [])
+
+    def test_report_import_survives_cached_predeployment_llm_module(self):
+        old_module = types.ModuleType("llm_explainer")
+        for name in ("get_deepseek_client", "safe_api_error", "generate_explanation"):
+            setattr(old_module, name, getattr(EXPLAINER, name))
+        self.assertFalse(hasattr(old_module, "ensure_score_explanations"))
+        with patch.dict(sys.modules, {"llm_explainer": old_module}):
+            app = self.app()
+            app.radio[0].set_value("精细搜索").run()
+            self.assertEqual(list(app.exception), [])
+            self.assertTrue(app.chat_input[0].disabled)
 
     def test_library_and_credentials_are_isolated_between_two_sessions(self):
         first = self.app()

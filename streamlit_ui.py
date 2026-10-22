@@ -12,7 +12,8 @@ try:
     register_heif_opener()
 except ImportError:
     pass
-from llm_explainer import get_deepseek_client, safe_api_error, ensure_score_explanations
+from llm_explainer import get_deepseek_client, safe_api_error
+from score_report import ensure_score_explanations
 from photo_query import build_photo_query
 from clarification_policy import clarification_questions, must_return_results, concise_question
 
