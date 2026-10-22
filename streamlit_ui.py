@@ -5,6 +5,7 @@ from io import BytesIO
 from html import escape
 from datetime import datetime
 import streamlit as st
+from backend_resources import load_core_resources
 from PIL import Image, ImageOps, UnidentifiedImageError
 try:
     from pillow_heif import register_heif_opener
@@ -290,14 +291,9 @@ hr {
 st.markdown(APP_CSS, unsafe_allow_html=True)
 
 # ---------- Shared immutable catalogue; semantic model loads on first query ----------
-@st.cache_resource
-def load_core_resources():
-    import AdaphotoRet_run as backend
-    catalogue = backend.load_metadata()
-    return {"backend": backend, "metadata": catalogue, "image_paths": list(catalogue)}
-
 try:
-    core = load_core_resources()
+    backend_path = PROJECT_ROOT / "AdaphotoRet_run.py"
+    core = load_core_resources(backend_path.read_bytes(), str(backend_path))
 except Exception:
     st.error("照片库暂时无法加载。请检查项目依赖和 metadata.demo.json；本地模式可使用自己的元数据。")
     st.stop()

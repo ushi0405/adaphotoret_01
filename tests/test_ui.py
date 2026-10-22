@@ -255,8 +255,11 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.environment_patch = patch.dict(os.environ, {"ADAPHOTORET_LOCAL_MODE": "0", "DEEPSEEK_API_KEY": "host-fixture-secret"})
         self.environment_patch.start()
         self.backend = backend
+        self.backend_patch = patch("backend_resources._load_backend", return_value=backend)
+        self.backend_patch.start()
 
     def tearDown(self):
+        self.backend_patch.stop()
         self.st.cache_resource.clear()
         self.environment_patch.stop()
         if self.previous_backend is None:
