@@ -33,7 +33,8 @@ def ui_functions(*names, **variables):
     scope = {"os": os, "Path": Path, "build_photo_query": build_photo_query,
              "clarification_questions": clarification_questions,
              "must_return_results": must_return_results, "concise_question": concise_question,
-             "safe_api_error": EXPLAINER.safe_api_error, **variables}
+             "safe_api_error": EXPLAINER.safe_api_error,
+             "ensure_score_explanations": EXPLAINER.ensure_score_explanations, **variables}
     exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
     return scope
 
@@ -155,7 +156,7 @@ class SessionStorageTests(unittest.TestCase):
         scope = ui_functions("search_photos_tool", search_photos=search)
         client = object()
         scope["search_photos_tool"]("query", client)
-        search.assert_called_once_with("query", client=client, allow_environment=False, include_explanation=True)
+        search.assert_called_once_with("query", client=client, allow_environment=False, include_explanation=False)
 
     def test_search_failure_does_not_fabricate_images_or_expose_error(self):
         scope = ui_functions("search_photos_tool", search_photos=Mock(side_effect=RuntimeError("secret-test-value")))
@@ -329,6 +330,27 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertEqual(list(app.exception), [])
         self.assertTrue(any("语义模型暂时不可用" in error.value for error in app.error))
         self.assertEqual(len(app.get("imgs")), 0)
+
+    def test_saved_numeric_report_gains_explanations_on_rerun_without_search_or_key(self):
+        app = self.app()
+        app.radio[0].set_value("精细搜索").run()
+        path = next(iter(self.backend.load_metadata()))
+        report = ("### 查询「晋祠大门」的可解释检索结果\n\n#### 推理链（Top 3）\n"
+                  f"1. `{path}` | 最终得分: 76\n"
+                  "[base_semantic_similarity +0.379] [entity_keyword_match +0.150]\n"
+                  "📌 向量语义相似 0.7582 × 0.50 | 命中实体: 大门\n")
+        conv = app.session_state["conversations"][app.session_state["current_conv_id"]]
+        conv["messages"].append(dict(role="assistant", content="旧候选", images=[path], report=report, kind="results"))
+        app.run()
+        self.assertEqual(list(app.exception), [])
+        rendered = "\n".join(item.value for item in app.markdown)
+        self.assertIn("逐图评分说明", rendered)
+        self.assertIn("最终得分76（非概率）", rendered)
+        self.assertIn("命中实体: 大门", rendered)
+        self.assertEqual(conv["messages"][-1]["report"], report)
+        self.backend.search_photos.assert_not_called()
+        self.backend.get_search_resources.assert_not_called()
+        self.assertTrue(app.chat_input[0].disabled)
 
     def test_three_question_runtime_cap_survives_reruns_and_target_switching(self):
         import numpy as np

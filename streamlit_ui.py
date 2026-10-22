@@ -12,7 +12,7 @@ try:
     register_heif_opener()
 except ImportError:
     pass
-from llm_explainer import get_deepseek_client, safe_api_error
+from llm_explainer import get_deepseek_client, safe_api_error, ensure_score_explanations
 from photo_query import build_photo_query
 from clarification_policy import clarification_questions, must_return_results, concise_question
 
@@ -773,12 +773,17 @@ def add_message(role, content, thinking="", images=None, report="", kind=None):
 
 def search_photos_tool(query, client=None):
     try:
-        result = search_photos(query, client=client, allow_environment=False, include_explanation=client is not None)
+        # Report prose is local and evidence-based, including direct/capped exits.
+        # The optional dialogue client's consent and call paths are unchanged.
+        result = search_photos(query, client=client, allow_environment=False, include_explanation=False)
         top1, top2, top3, report, table_data, top_results = result
     except Exception:
         top1 = top2 = top3 = None
         report = "检索暂时失败，请检查模型和照片库后重试。未生成任何替代或模拟结果。"
         table_data, top_results = [], []
+    # Keep this outside the search exception handler: explanation display must
+    # never turn already-retrieved photos into a failed/empty search.
+    report = ensure_score_explanations(report, query, top_results)
     return {
         "top1": top1,
         "top2": top2,
@@ -1225,7 +1230,7 @@ def show_fine_retrieval():
                             render_image_tile(img_path, crop=False)
                 if msg.get("report"):
                     with st.expander("📋 详细报告", expanded=False):
-                        st.markdown(msg["report"])
+                        st.markdown(ensure_score_explanations(msg["report"]))
 
     st.caption("同一照片最多澄清3次；线索足够或输入「直接给结果」时立即展示候选。只合并你的线索，不使用助手回复；找另一张照片请点击「＋ 新建对话」。")
     # 输入框
