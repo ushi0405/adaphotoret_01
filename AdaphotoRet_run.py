@@ -74,12 +74,15 @@ STRUCTURE_TERMS = {"结构", "框架", "essay title", "thesis statement",
                    "topic sentence", "reference list", "main body"}
 GEO_SUFFIX_TERMS = {
     "省", "市", "区", "县", "镇", "街", "路", "大道", "街道", "古城", "景区", "公园",
-    "大学", "校区", "山", "寺", "庙", "宫", "塔", "桥", "湖", "海", "江", "河", "湾", "岛"
+    "大学", "校区", "山", "寺", "祠", "庙", "宫", "塔", "桥", "湖", "海", "江", "河", "湾", "岛"
 }
 NON_GEO_ENTITY_TERMS = {
     "机器人", "人形", "人形机器人", "玩偶", "娃娃", "雕塑", "人物", "宠物", "照片", "图片",
     "美食", "水煮肉片", "衣服", "T恤", "白色Polo", "外观"
 }
+# Jieba tags these generic scene nouns as ns; that does not make them a named
+# place. Keep them as ordinary scene/entity evidence, not a -1.5 GPS constraint.
+GENERIC_GEO_SCENES = {"高山", "大海", "海洋", "湖泊", "城市", "高原", "海岛", "山林"}
 ANIMAL_CATEGORIES = {"动物", "宠物"}
 NON_HUMAN_OBJECT_TERMS = {
     "玩偶", "娃娃", "玩具", "雕塑", "雕像", "陶俑", "兵马俑", "石雕", "佛像", "文物",
@@ -182,7 +185,9 @@ def flatten_info_text(info: Dict) -> str:
         landmarks_text = str(landmarks) if landmarks else ""
     loc_text = f"{city} {landmarks_text} {gps_address}".strip()
     category = str(info.get("category", ""))
-    return f"{category} {scene} {image_type} {desc} {kw_text} {loc_text}".strip()
+    ocr = get_field(info, "ocr_text", [])
+    ocr_text = " ".join(str(x) for x in ocr) if isinstance(ocr, list) else str(ocr)
+    return f"{category} {scene} {image_type} {desc} {kw_text} {loc_text} {ocr_text}".strip()
 
 
 def enrich_metadata(metadata_dict):
@@ -208,9 +213,59 @@ def enrich_metadata(metadata_dict):
     return enriched
 
 
+def query_tokens(text: str):
+    """Preserve typed names without changing Jieba globally.
+
+    A neighboring province can otherwise turn 山西晋祠 into 山西晋 / 祠.
+    Candidate labels are used only when backed by the stored GPS address;
+    descriptions, OCR and assistant text never become a geographic dictionary.
+    """
+    # A breed's geographic adjective is not a photo location (美国短毛猫).
+    names = {name: "n" for name in set(BREED_NORMALIZATION) | set(BREED_NORMALIZATION.values())}
+    names.update((name, "n") for aliases in BREED_ALIASES.values() for name in aliases
+                 if re.search(r"[\u4e00-\u9fff]", name))
+    for info in metadata.values():
+        cities, landmarks = parse_location_from_info(info)
+        names.update((name, "ns") for name in cities if len(name) >= 2)
+        names.update((name, "nz") for name in landmarks if len(name) >= 2)
+        location = info.get("location") or {}
+        address = (location.get("gps_address") or "") if isinstance(location, dict) else ""
+        candidates = get_field(info, "landmark_candidates", [])
+        if isinstance(candidates, list):
+            names.update((name, "nz") for name in candidates
+                         if isinstance(name, str) and len(name) >= 2 and name in address)
+    if not names:
+        yield from pseg.cut(text)
+        return
+    pattern = "|".join(re.escape(name) for name in sorted(names, key=lambda n: (-len(n), n)))
+    start = 0
+    for match in re.finditer(pattern, text):
+        # A place-looking brand (上海牌手表) is not a location constraint.
+        if text[match.end():].startswith("牌"):
+            continue
+        yield from pseg.cut(text[start:match.start()])
+        yield match.group(), names[match.group()]
+        start = match.end()
+    yield from pseg.cut(text[start:])
+
+
+def geographic_terms(text: str):
+    cities, landmarks = set(), set()
+    non_geo = NON_GEO_ENTITY_TERMS | GENERIC_GEO_SCENES | PET_ANIMAL_TYPES | set(BREED_NORMALIZATION.values())
+    for word, flag in query_tokens(text):
+        if word in non_geo or word.endswith("牌"):
+            continue
+        if len(word) >= 2 and flag == "ns":
+            cities.add(word)
+        elif flag in ("n", "nr", "nz", "nt") and (len(word) >= 3 or flag == "nz") and word not in GEO_SUFFIX_TERMS \
+                and word.endswith(tuple(GEO_SUFFIX_TERMS)):
+            landmarks.add(word)
+    return cities, landmarks
+
+
 def extract_entities_by_pos(text: str) -> List[str]:
-    stop_words = {'的', '了', '是', '在', '和', '与', '或', '一个', '两个', '那种', '这个', '那个', '中', '里', '有', '被', '把', '照片', '图片', '图像'}
-    words = pseg.cut(text)
+    stop_words = {'的', '了', '是', '在', '和', '与', '或', '一个', '两个', '那种', '这个', '那个', '中', '里', '有', '被', '把', '照片', '图片', '图像', '拍', '处'}
+    words = query_tokens(text)
     entities = []
     for word, flag in words:
         if word in stop_words or word in DIALOGUE_WORDS: continue
@@ -226,28 +281,19 @@ def extract_entities_by_pos(text: str) -> List[str]:
 
 
 def extract_geo_candidates(text: str) -> List[str]:
-    """从查询中提取可能的地理候选词（地名、专名、长名词等）"""
-    candid = []
-    words = pseg.cut(text)
-    for w, flag in words:
-        if w in NON_GEO_ENTITY_TERMS:
-            continue
-        if len(w) >= 2 and flag == 'ns':
-            candid.append(w)
-    chinese_chunks = re.findall(r'[\u4e00-\u9fff]{2,}', text)
-    for chunk in chinese_chunks:
-        if chunk in NON_GEO_ENTITY_TERMS:
-            continue
-        if any(suffix in chunk for suffix in GEO_SUFFIX_TERMS) and chunk not in candid:
-            candid.append(chunk)
-    return list(set(candid))
+    """Only named geographic tokens, never a whole clause containing 山/海/路."""
+    cities, landmarks = geographic_terms(text)
+    return sorted(cities | landmarks, key=lambda name: (-len(name), name))
 
 
 def parse_query(user_query: str) -> Dict:
     # Resolve only user-authored clauses before POS, attributes, and embeddings.
-    processed = positive_photo_clues(build_photo_query(current_user_message=user_query), pseg.cut)
-    for key, normalized in BREED_NORMALIZATION.items():
-        processed = processed.replace(key, normalized)
+    processed = positive_photo_clues(build_photo_query(current_user_message=user_query), query_tokens)
+    # Normalize the breed slot, not the user's sentence. Replacing 蓝白猫 with
+    # 英短蓝白 would erase the explicit 猫 clue; repeated replacement also
+    # corrupts canonical names (布偶猫 -> 布偶猫猫, 英短蓝白 -> 英短蓝猫...).
+    breed_names = set(BREED_NORMALIZATION) | set(BREED_NORMALIZATION.values())
+    breed_pattern = "|".join(re.escape(name) for name in sorted(breed_names, key=lambda n: (-len(n), n)))
 
     q = normalize_text(processed)
     entities = extract_entities_by_pos(processed)
@@ -255,6 +301,13 @@ def parse_query(user_query: str) -> Dict:
     person_attr["ethnicity"] = []  # Do not infer or rank people by race/ethnicity.
     person_expand = expand_person_attributes(person_attr)
     pet_attr = extract_pet_attributes(processed)
+    # Keep the longest explicit breed once; the attribute helper's substring
+    # aliases must not turn 英短蓝白 into both blue-white and blue breeds.
+    pet_attr["breed"] = list(dict.fromkeys(
+        BREED_NORMALIZATION.get(m.group(), m.group()) for m in re.finditer(breed_pattern, processed)
+    ))
+    if not (pet_attr["animal_type"] or pet_attr["breed"]):
+        pet_attr = {key: [] for key in pet_attr}
     pet_expand = expand_pet_attributes(pet_attr)
     geo_candidates = extract_geo_candidates(processed)
     query_text = normalize_text(processed)
@@ -275,13 +328,7 @@ def parse_query(user_query: str) -> Dict:
     if wants_object:
         query_categories.append("物品")
 
-    cities = set()
-    landmarks = set()
-    for word, flag in pseg.cut(processed):
-        if flag == 'ns':
-            cities.add(word)
-        elif flag in ('n', 'nz') and len(word) >= 3 and word not in NON_GEO_ENTITY_TERMS and any(suffix in word for suffix in GEO_SUFFIX_TERMS):
-            landmarks.add(word)
+    cities, landmarks = geographic_terms(processed)
 
     terms = {
         "needs_grass": any(t in q for t in GRASS_TERMS),
@@ -313,7 +360,7 @@ def parse_query(user_query: str) -> Dict:
     entity_str = " ".join(entities)
     person_str = " ".join(person_expand)
     pet_str = " ".join(pet_expand)
-    geo_str = " ".join(list(cities) + list(landmarks) + geo_candidates)
+    geo_str = " ".join(sorted(cities | landmarks | set(geo_candidates)))
     expanded_query = f"{processed} {entity_str} {geo_str} {person_str} {pet_str}".strip()
 
     decomposition = {
@@ -440,7 +487,7 @@ vector_index = _LazyIndex()
 
 def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
     score = base_sim * 0.50
-    trace = [("base_semantic_similarity", round(base_sim, 4), "向量语义相似")]
+    trace = [("base_semantic_similarity", round(score, 4), f"向量语义相似 {base_sim:.4f} × 0.50")]
 
     # ---------- 一级类别槽位 ----------
     query_categories = query_terms.get("query_categories", [])
@@ -495,10 +542,15 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
             trace.append(("geo_landmark_match", 0.30, f"命中地标:{','.join(sorted(overlap_lm))}"))
             geo_hit = True
 
+    # A broad province/city hit cannot satisfy an explicit, more specific
+    # landmark (山西 + 晋祠 must not accept a photo in 大同 just for 山西).
+    if q_landmarks:
+        geo_hit = bool(q_landmarks.intersection(doc_landmarks))
     if geo_candidates and not geo_hit:
         gps_address = img_info.get("location", {}).get("gps_address", "")
         if gps_address:
-            for gc in geo_candidates:
+            required_geo = q_landmarks or q_cities or geo_candidates
+            for gc in sorted(required_geo, key=lambda name: (-len(name), name)):
                 if gc in gps_address:
                     if len(gc) >= 3:
                         score += 0.30
@@ -509,10 +561,23 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
                     geo_hit = True
                     break
 
+    # Every explicit named component must be supported by location data. In
+    # particular, 太原 + 理工大学 cannot be satisfied by 北京理工大学. OCR and
+    # descriptions describe visible content, not where the photo was taken.
+    required_geo = set(q_cities) | set(q_landmarks) | set(geo_candidates)
+    missing_geo = []
+    if required_geo:
+        location = img_info.get("location") or {}
+        address = (location.get("gps_address") or "") if isinstance(location, dict) else ""
+        geo_fields = [*doc_cities, *doc_landmarks, address]
+        missing_geo = sorted(name for name in required_geo if not any(name in field for field in geo_fields))
+        geo_hit = geo_hit and not missing_geo
+
     if (q_cities or q_landmarks or geo_candidates) and not geo_hit:
         penalty = -1.5
         score += penalty
-        trace.append(("geo_mismatch_penalty", penalty, "未命中任何地理信息"))
+        evidence = f"未满足地理约束: {', '.join(missing_geo)}" if missing_geo else "未命中任何地理信息"
+        trace.append(("geo_mismatch_penalty", penalty, evidence))
 
     # 学术/示例/结构等
     if query_terms.get("needs_academic_writing") and match_terms(doc_text, ACADEMIC_WRITING_TERMS):
@@ -601,11 +666,14 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
                 score -= 0.15; trace.append(("pet_count_mismatch", -0.15))
 
     # ---------- 实体关键词匹配 ----------
-    query_entities = query_terms.get("extracted_entities", [])
+    query_entities = list(dict.fromkeys(query_terms.get("extracted_entities", [])))
     if query_entities:
         geo_entity_terms = set(query_terms.get("cities", set())) | set(query_terms.get("landmarks", set())) | set(query_terms.get("geo_candidates", []))
-        img_keywords = [normalize_text(k) for k in img_info.get("keywords", [])]
-        img_desc = normalize_text(img_info.get("description", ""))
+        img_keywords = [normalize_text(k) for k in get_field(img_info, "keywords", [])]
+        img_desc = normalize_text(get_field(img_info, "description", ""))
+        ocr = get_field(img_info, "ocr_text", [])
+        img_ocr = normalize_text(" ".join(str(x) for x in ocr) if isinstance(ocr, list) else ocr)
+        entity_text = f"{img_desc} {img_ocr}"
         object_text = " ".join([
             doc_text,
             " ".join(img_keywords),
@@ -647,11 +715,11 @@ def rerank_score(query_terms: Dict, img_info: Dict, base_sim: float):
                 meaningful_entities.append(e)
             elif e in OBJECT_SYNONYM_MAP:
                 meaningful_entities.append(e)
-            if e in img_desc or any(e in kw for kw in img_keywords):
+            if e in entity_text or any(e in kw for kw in img_keywords):
                 matched.append(e)
             elif len(e) > 1 and e in SYNONYM_MAP:
                 synonyms = SYNONYM_MAP[e]
-                if any(syn in img_desc or any(syn in kw for kw in img_keywords) for syn in synonyms):
+                if any(syn in entity_text or any(syn in kw for kw in img_keywords) for syn in synonyms):
                     matched.append(e)
         if matched:
             CORE_ACTIVITY_TERMS = {"沙滩排球", "beach volleyball", "排球比赛"}
@@ -685,13 +753,13 @@ def build_reasoning_markdown(user_query, decomposition, top_results, *, client=N
     allow_environment = allow_environment and os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
     lines = [f"### 查询「{user_query}」的可解释检索结果", ""]
     entities = decomposition.get("extracted_entities", [])
-    if entities: lines.append(f"**提取实体**：{'、'.join(entities)}")
+    if entities: lines.extend([f"**提取实体**：{'、'.join(entities)}", ""])
     person_attr = decomposition.get("person_attributes", {})
     if any(person_attr.values()):
         parts = []
         if person_attr.get("count"): parts.append(f"数量：{','.join(person_attr['count'])}")
         if person_attr.get("gender"): parts.append(f"性别：{','.join(person_attr['gender'])}")
-        lines.append(f"**人物属性**：{'；'.join(parts)}")
+        lines.extend([f"**人物属性**：{'；'.join(parts)}", ""])
     pet_attr = decomposition.get("pet_attributes", {})
     if any(pet_attr.values()):
         parts = []
@@ -700,7 +768,8 @@ def build_reasoning_markdown(user_query, decomposition, top_results, *, client=N
         if pet_attr.get("coat_color"): parts.append(f"毛色：{','.join(pet_attr['coat_color'])}")
         if pet_attr.get("action"): parts.append(f"动作：{','.join(pet_attr['action'])}")
         if pet_attr.get("life_stage"): parts.append(f"年龄：{','.join(pet_attr['life_stage'])}")
-        lines.append(f"**宠物属性**：{'；'.join(parts)}")
+        if parts:
+            lines.extend([f"**宠物属性**：{'；'.join(parts)}", ""])
     lines.append(""); lines.append("#### 推理链（Top 3）")
     for idx, r in enumerate(top_results, start=1):
         lines.append(f"{idx}. `{r['img_path']}` | 最终得分: {r['score']}")
@@ -710,7 +779,7 @@ def build_reasoning_markdown(user_query, decomposition, top_results, *, client=N
             tags.append(f"[{rule} {sign}{delta:.3f}]")
         lines.append(" ".join(tags))
         evi = " | ".join([evidence for _, _, evidence in r["trace"]])
-        lines.append(f"<small>📌 {evi}</small>")
+        lines.extend([f"📌 {evi}", ""])
     if include_explanation:
         try:
             explanation = generate_explanation(
