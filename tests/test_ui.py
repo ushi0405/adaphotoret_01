@@ -12,6 +12,7 @@ from contextlib import nullcontext
 from io import BytesIO
 from PIL import Image, ImageOps, UnidentifiedImageError
 import unittest
+from photo_query import build_photo_query
 from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +27,7 @@ def ui_functions(*names, **variables):
     definitions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names]
     for node in definitions:
         node.decorator_list = []
-    scope = {"os": os, "Path": Path, **variables}
+    scope = {"os": os, "Path": Path, "build_photo_query": build_photo_query, **variables}
     exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
     return scope
 
@@ -291,6 +292,27 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertEqual(second.session_state["photo_library_data"]["libraries"], {})
         self.assertEqual(list(first.exception), [])
         self.assertEqual(list(second.exception), [])
+
+    def test_new_conversation_and_switching_keep_photo_clues_separate(self):
+        app = self.app()
+        app.radio[0].set_value("精细搜索").run()
+        first_id = app.session_state["current_conv_id"]
+        first = app.session_state["conversations"][first_id]
+        first["messages"].append({"role": "user", "content": "海边的猫"})
+        next(button for button in app.button if "新建对话" in button.label).click().run()
+        second_id = app.session_state["current_conv_id"]
+        self.assertNotEqual(first_id, second_id)
+        second = app.session_state["conversations"][second_id]
+        self.assertEqual(build_photo_query(second["messages"]), "")
+        second["messages"].append({"role": "user", "content": "山上的瀑布"})
+        app.session_state["current_conv_id"] = first_id
+        app.run()
+        self.assertEqual(build_photo_query(app.session_state["conversations"][first_id]["messages"]), "海边的猫")
+        self.assertEqual(build_photo_query(app.session_state["conversations"][second_id]["messages"]), "山上的瀑布")
+        fresh_session = self.app()
+        self.assertEqual(build_photo_query(fresh_session.session_state["conversations"][fresh_session.session_state["current_conv_id"]]["messages"]), "")
+        self.assertEqual(list(app.exception), [])
+        self.assertEqual(list(fresh_session.exception), [])
 
     def test_failed_semantic_download_is_visible_not_a_stacktrace_or_fake_results(self):
         app = self.app()

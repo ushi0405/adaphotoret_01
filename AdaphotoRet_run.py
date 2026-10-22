@@ -23,6 +23,7 @@ from attributes import (
     BREED_ALIASES, BREED_NORMALIZATION
 )
 from llm_explainer import generate_explanation
+from photo_query import DIALOGUE_WORDS, build_photo_query, positive_photo_clues
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_ID = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -212,7 +213,7 @@ def extract_entities_by_pos(text: str) -> List[str]:
     words = pseg.cut(text)
     entities = []
     for word, flag in words:
-        if word in stop_words: continue
+        if word in stop_words or word in DIALOGUE_WORDS: continue
         if flag[0] in ('n', 'v', 'ns', 'nt', 't', 'a', 'f', 's', 'i', 'j', 'l'):
             if len(word) == 1 and flag[0] not in ('n', 'ns', 'nt', 'v'): continue
             entities.append(word)
@@ -243,7 +244,8 @@ def extract_geo_candidates(text: str) -> List[str]:
 
 
 def parse_query(user_query: str) -> Dict:
-    processed = user_query
+    # Resolve only user-authored clauses before POS, attributes, and embeddings.
+    processed = positive_photo_clues(build_photo_query(current_user_message=user_query), pseg.cut)
     for key, normalized in BREED_NORMALIZATION.items():
         processed = processed.replace(key, normalized)
 
@@ -725,10 +727,12 @@ def search_photos(user_query: str, *, client=None, allow_environment=True, inclu
     allow_environment = allow_environment and os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
     if not user_query or not user_query.strip():
         return [None, None, None, "请输入检索描述。", [], []]
+    parsed = parse_query(user_query)
+    if not parsed["expanded_query"]:
+        return None, None, None, "请补充照片中的人物、物品、地点或动作线索。", [], []
     resources = get_search_resources()
     if not resources["image_paths"]:
         return None, None, None, "照片库为空；请先准备照片与元数据。", [], []
-    parsed = parse_query(user_query)
     qv = model.encode([parsed["expanded_query"]], normalize_embeddings=True).astype("float32")
     k = min(80, len(image_paths))
     sims, indices = vector_index.search(qv, k)

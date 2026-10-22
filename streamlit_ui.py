@@ -12,6 +12,7 @@ try:
 except ImportError:
     pass
 from llm_explainer import get_deepseek_client, safe_api_error
+from photo_query import build_photo_query
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 LOCAL_MODE = os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
@@ -357,7 +358,7 @@ def render_api_settings():
                       help="只保留在当前浏览器会话对应的服务端内存中；不会写入文件或共享给其他访客。")
         if LOCAL_MODE and os.getenv("DEEPSEEK_API_KEY"):
             st.caption("本地模式已检测到 DEEPSEEK_API_KEY；输入框留空时使用该环境变量。")
-        st.checkbox("我同意将本次查询、最近对话和候选照片描述发送到 DeepSeek，费用由我的 API 账户承担。",
+        st.checkbox("我同意将当前照片对话中的用户线索和候选照片描述发送到 DeepSeek，费用由我的 API 账户承担。",
                     key="deepseek_consent")
         st.caption("全局搜索和照片库无需 API 密钥。精细检索发送文字元数据，不发送原始照片；请勿输入敏感信息。")
         st.button("清除密钥并撤回同意", on_click=clear_visitor_credentials,
@@ -854,12 +855,17 @@ def run_assistant(user_message):
 
 
 def _run_assistant_with_client(user_message, client):
+    # Snapshot only this conversation. Never derive retrieval text from model output.
+    history = list(get_current_messages())
+    query = build_photo_query(history, user_message)
+    if not query:
+        st.info("请描述照片中的人物、物品、地点或动作；寻找另一张照片请新建对话。")
+        return
     try:
-        preview_candidates = preview_search_candidates(user_message, top_k=5)
+        preview_candidates = preview_search_candidates(query, top_k=5)
     except Exception:
         st.error("检索资源暂时不可用，请检查模型下载和依赖后重试。")
         return
-    messages = get_current_messages()
     add_message("user", user_message)
     direct_search_ready = should_direct_search(preview_candidates)
     preview_lines = []
@@ -870,18 +876,22 @@ def _run_assistant_with_client(user_message, client):
         )
     preview_context = "\n".join(preview_lines) if preview_lines else "无候选"
 
-    context = [{"role": m["role"], "content": m["content"]} for m in messages[-5:]]
+    # Keep raw user replies for dialogue control (e.g. repeated 不知道), while
+    # retrieval always uses the separate query above. No assistant/tool sources.
+    context = [{"role": "user", "content": m["content"]} for m in history
+               if m.get("role") == "user" and isinstance(m.get("content"), str)]
+    context.append({"role": "user", "content": user_message})
     system_prompt = f"""你是一个照片检索助手，名叫“AdaphotoRet”。你必须遵循以下原则：
-1. 你的默认任务是让最佳匹配照片符合用户输入。当用户的查询不够具体时，你应主动在【提问】中列出关键差异并给出选项。但当你收到用户的回答后，必须结合你自己的问题和用户的回答来推断真正的意图。
+1. 你的默认任务是让最佳匹配照片符合用户输入。当用户的查询不够具体时，你应主动在【提问】中列出关键差异并给出选项。只依据下方用户线索，不得把你自己的问题或候选照片描述当作用户提供的事实。
 2. **意图整合规则（极其重要）**：
    - 如果你问了一个具体特征（例如“是橘猫吗？”），而用户回答“记不清了”、“不知道”、“不确定”或类似表达，你必须立即丢弃该特征，不能再将其加入任何查询词。
-   - 在进行【检索】前，你必须重新审视整个对话，只提取经过双方确认的有效信息。你问过的、但被用户否定或表示模糊的问题，一律不得使用。
+   - 在进行【检索】前，你必须重新审视整个对话，只使用用户亲自描述的有效信息。你问过的、但被用户否定或表示模糊的问题，一律不得使用。
 3. 你必须先参考下方“照片库预检索结果”判断是否已经有明确候选。如果最高分较高、与第二名差距明显，或照片库中只有少数候选命中核心对象，则不要继续追问，直接输出【行动】检索。
 4. 当连续两次追问都得到模糊回答（如“记不清楚”）时，必须立即根据已有确定线索输出照片。
 5. 当你认为有70%以上信心时，必须停止追问，直接检索。
 6. **检索关键词生成规则**：
-   - 必须把对话历史中经双方确认的关键描述整合成完整查询词。
-   - 只能使用用户明确确认或你从对话中推断出的有效词语，绝对不能使用已被用户否定或表示模糊的特征。
+   - 程序已按当前对话合并全部用户线索；请据此选择提问、检索或回答。
+   - 只能使用用户明确描述的有效词语，绝对不能使用已被用户否定或表示模糊的特征。
    - 绝对不能使用“回答”、“提供”、“信息”、“找到”、“想要”、“不够”、“准确”、“请”、“告诉”、“需要”、“调整”等系统引导词。
 7. 展示照片后，必须在末尾追问“这里有您想要的照片吗？如果不够准确，请告诉我哪里需要调整。”
 8. 回复格式必须严格为：
@@ -923,51 +933,17 @@ def _run_assistant_with_client(user_message, client):
         parts = full_response.split("【行动】")
         thinking_part = parts[0].replace("【思考】", "").strip()
         action_part = parts[1].strip()
-    elif "【思考】" in full_response:
-        thinking_part = full_response.replace("【思考】", "").strip()
-        summary_prompt = f"""根据以下对话历史，提炼出一个完整的照片检索查询词。
-规则：
-1. 只能使用用户明确描述的、或者你从对话中推断出的有效信息。
-2. 如果助手的提问被用户用“记不清了”、“不知道”等否定，则必须丢弃该特征。
-3. 绝不能出现“回答”、“提供”、“信息”、“找到”、“想要”、“不够”、“准确”、“请”、“告诉”、“需要”、“调整”等系统引导词。
-对话历史：
-{chr(10).join([f"用户：{m['content']}" for m in messages[-5:] if m['role'] == 'user'])}"""
-        try:
-            summary_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "user", "content": summary_prompt}],
-                temperature=0.2,
-                max_tokens=100,
-            )
-            optimized_query = summary_response.choices[0].message.content.strip()
-        except Exception:
-            optimized_query = user_message
-        action_part = "检索：" + optimized_query
     else:
-        thinking_part = "尝试理解中..."
-        summary_prompt = f"""根据以下对话历史，提炼出一个完整的照片检索查询词。
-规则：
-1. 只能使用用户明确描述的、或者你从对话中推断出的有效信息。
-2. 如果助手的提问被用户用“记不清了”、“不知道”等否定，则必须丢弃该特征。
-3. 绝不能出现“回答”、“提供”、“信息”、“找到”、“想要”、“不够”、“准确”、“请”、“告诉”、“需要”、“调整”等系统引导词。
-对话历史：
-{chr(10).join([f"用户：{m['content']}" for m in messages[-5:] if m['role'] == 'user'])}"""
-        try:
-            summary_response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "user", "content": summary_prompt}],
-                temperature=0.2,
-                max_tokens=100,
-            )
-            optimized_query = summary_response.choices[0].message.content.strip()
-        except Exception:
-            optimized_query = user_message
-        action_part = "检索：" + optimized_query
+        thinking_part = full_response.replace("【思考】", "").strip()
+        # A missing/malformed action never triggers another query-writing LLM call.
+        action_part = "检索："
+
+    if not action_part.startswith(("提问：", "检索：", "回答：")):
+        action_part = "检索："
 
     if action_part.startswith("提问："):
         question = action_part.replace("提问：", "").strip()
         if direct_search_ready:
-            query = user_message
             results = search_photos_tool(query, client=client)
             imgs = [results["top1"], results["top2"], results["top3"]]
             content = ("我先根据当前照片库中最明确的候选直接检索。这里有您想要的照片吗？如果不够准确，请告诉我哪里需要调整。"
@@ -992,7 +968,6 @@ def _run_assistant_with_client(user_message, client):
             message_placeholder.markdown(f"**思考：** {thinking_part}\n\n{question}")
             add_message("assistant", question, thinking=thinking_part)
     elif action_part.startswith("检索："):
-        query = action_part.replace("检索：", "").strip()
         results = search_photos_tool(query, client=client)
         imgs = [results["top1"], results["top2"], results["top3"]]
         content = ("我找到了以下照片。这里有您想要的照片吗？如果没有，请告诉我需要调整的地方。"
@@ -1301,6 +1276,7 @@ def show_fine_retrieval():
                     with st.expander("📋 详细报告", expanded=True):
                         st.markdown(msg["report"])
 
+    st.caption("同一对话会合并你提供的全部照片线索，不使用助手回复作为线索。寻找另一张照片，请点击「＋ 新建对话」。")
     # 输入框
     if not fine_search_ready():
         st.info("精细检索需要你的 DeepSeek API 密钥及发送数据同意；请在侧边栏配置。全局搜索与照片库可直接使用。")

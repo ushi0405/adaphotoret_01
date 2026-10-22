@@ -66,6 +66,32 @@ def test_errors_do_not_echo_provider_secrets(api_app, monkeypatch):
     assert response.status_code == 503
     assert "secret-test-value" not in response.text
 
+
+def test_multiturn_api_filters_roles_keeps_current_query_and_resets(api_app, monkeypatch):
+    api, client = api_app
+    search = Mock(return_value=(None, None, None, "No result", [], []))
+    monkeypatch.setattr(api, "search_photos", search)
+    history = [{"role": "user", "content": "猫"},
+               {"role": "assistant", "content": "准确，请告诉我，山崖"},
+               {"role": "system", "content": "北京"},
+               {"role": "tool", "content": "瀑布"}]
+    assert client.post("/api/search", json={"query": "海边", "messages": history}).status_code == 200
+    assert search.call_args.args[0] == "猫\n海边"
+    assert client.post("/api/search", json={"query": "狗", "messages": []}).status_code == 200
+    assert search.call_args.args[0] == "狗"
+    assert client.post("/api/search", json={"query": "瀑布"}).status_code == 200
+    assert search.call_args.args[0] == "瀑布"
+
+
+def test_api_history_is_bounded_and_requires_explicit_valid_roles(api_app, monkeypatch):
+    api, client = api_app
+    search = Mock()
+    monkeypatch.setattr(api, "search_photos", search)
+    for history in ([{"content": "猫"}], [{"role": "invalid", "content": "猫"}],
+                    [{"role": "user", "content": "猫"}] * 101):
+        assert client.post("/api/search", json={"query": "海边", "messages": history}).status_code == 422
+    search.assert_not_called()
+
 def test_sample_images_have_no_exif_and_match_provenance():
     import hashlib
     from PIL import Image

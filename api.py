@@ -9,6 +9,7 @@ from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
+from typing import Literal
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from AdaphotoRet_run import metadata, rank_all_photos, resolve_photo_path, search_photos
 from llm_explainer import get_deepseek_client
+from photo_query import build_photo_query
 
 app = FastAPI(title="AdaphotoRet API")
 app.add_middleware(
@@ -29,6 +31,16 @@ app.add_middleware(
 
 class SearchRequest(BaseModel):
     query: str = Field(max_length=2000)
+
+class SearchMessage(BaseModel):
+    role: Literal["user", "assistant", "system", "tool"]
+    content: str = Field(max_length=2000)
+
+
+class FineSearchRequest(SearchRequest):
+    # Stateless: callers send only the current target's history, or [] to reset.
+    messages: list[SearchMessage] = Field(default_factory=list, max_length=100)
+
 
 def to_url(path):
     return "/photos/" + quote(path.removeprefix("data/"), safe="/") if path else ""
@@ -63,7 +75,7 @@ def photo(relative_path: str):
 
 @app.post("/api/search")
 def fine_search(
-    req: SearchRequest,
+    req: FineSearchRequest,
     x_deepseek_api_key: str | None = Header(default=None),
     x_allow_external_processing: str | None = Header(default=None),
 ):
@@ -76,7 +88,8 @@ def fine_search(
         client = get_deepseek_client()
     try:
         p1, p2, p3, report, table, _ = search_photos(
-            req.query, client=client, include_explanation=client is not None
+            build_photo_query([m.model_dump() for m in req.messages], req.query),
+            client=client, include_explanation=client is not None
         )
     except Exception:
         raise HTTPException(503, "Search resources unavailable; check model setup") from None
