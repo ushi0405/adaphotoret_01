@@ -6,6 +6,29 @@ an empty API history) for a different target. Never infer a reset from prose.
 import re
 
 
+# Dialogue commands are not photo facts, including when appended to a clue.
+DIRECT_RESULTS = re.compile(
+    r"(?<!不要)(?<!不用)(?<!别)(?<!不需要)(?:请)?(?:直接|立即|马上|先)(?:给我|给|显示|展示|返回|输出|出)(?:看)?(?:一下)?(?:搜索)?(?:结果|候选|照片)|"
+    r"(?:请)?(?:不用|不要|别)(?:再|继续)?(?:问|提问|追问)(?:我)?(?:了)?|"
+    r"(?<!不要)(?<!不用)(?<!别)(?<!不需要)(?:请)?直接(?:搜索|检索|搜)|"
+    r"(?:^|[，,。；;\n])(?:请)?给我(?:看)?(?:结果|候选|照片)|"
+    r"(?<!don't )(?<!not )show\s+(?:me\s+)?(?:the\s+)?results",
+    re.IGNORECASE,
+)
+
+
+def requests_direct_results(text):
+    return isinstance(text, str) and bool(DIRECT_RESULTS.search(text))
+
+
+def is_unclear_reply(text):
+    compact = re.sub(r"[\s，,。.!！?？;；:：、]+", "", text or "")
+    return bool(re.fullmatch(
+        r"(?:我)?(?:也|真的|实在)?(?:不知道|不(?:太)?清楚|不确定|记不清(?:楚)?|忘(?:记)?|想不起来|不记得)(?:了)?",
+        compact,
+    ))
+
+
 # Compare complete tokens/utterances, never remove substrings (请柬/请客 stay intact).
 DIALOGUE_WORDS = frozenset({
     "请", "请问", "告诉", "告诉我", "准确", "不够", "谢谢", "你好", "您好",
@@ -17,13 +40,13 @@ NO_CLUE_UTTERANCES = DIALOGUE_WORDS | frozenset({
     "好的", "好", "是的", "对", "对的", "不是", "不对", "不准确", "不够准确",
     "谢谢你", "谢谢您", "请告诉我", "告诉我吧", "请继续", "继续", "记不清了",
     "记不清楚", "我记不清了", "我不知道", "我不确定", "不知道了", "没有了",
-    "我记错了", "更正", "纠正", "重新描述",
+    "我记错了", "更正", "纠正", "重新描述", "不清楚", "不太清楚", "忘了", "想不起来", "不记得",
 })
 
 
 def is_no_clue(text):
     compact = re.sub(r"[\s，,。.!！?？;；:：、]+", "", text)
-    return not compact or compact in NO_CLUE_UTTERANCES
+    return not compact or compact in NO_CLUE_UTTERANCES or is_unclear_reply(text)
 
 
 def build_photo_query(messages=(), current_user_message=None):
@@ -39,6 +62,8 @@ def build_photo_query(messages=(), current_user_message=None):
         turns.append(current_user_message)
     clues = []
     for turn in turns:
+        if isinstance(turn, str):
+            turn = DIRECT_RESULTS.sub("", turn).strip(" ，,。.!！?？;；:：、")
         if not isinstance(turn, str) or is_no_clue(turn):
             continue
         turn = turn.strip()

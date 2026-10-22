@@ -13,6 +13,7 @@ from io import BytesIO
 from PIL import Image, ImageOps, UnidentifiedImageError
 import unittest
 from photo_query import build_photo_query
+from clarification_policy import clarification_questions, must_return_results, concise_question
 from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,10 +25,15 @@ SPEC.loader.exec_module(EXPLAINER)
 def ui_functions(*names, **variables):
     """Load selected pure UI helpers without running the Streamlit app."""
     tree = ast.parse((ROOT / "streamlit_ui.py").read_text())
+    if "_run_assistant_with_client" in names and "show_search_results" not in variables:
+        names = (*names, "show_search_results")
     definitions = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names]
     for node in definitions:
         node.decorator_list = []
-    scope = {"os": os, "Path": Path, "build_photo_query": build_photo_query, **variables}
+    scope = {"os": os, "Path": Path, "build_photo_query": build_photo_query,
+             "clarification_questions": clarification_questions,
+             "must_return_results": must_return_results, "concise_question": concise_question,
+             "safe_api_error": EXPLAINER.safe_api_error, **variables}
     exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
     return scope
 
@@ -320,6 +326,53 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertEqual(list(app.exception), [])
         self.assertTrue(any("语义模型暂时不可用" in error.value for error in app.error))
         self.assertEqual(len(app.get("imgs")), 0)
+
+    def test_three_question_runtime_cap_survives_reruns_and_target_switching(self):
+        import numpy as np
+        paths = list(self.backend.load_metadata())[:2]
+        catalogue = {
+            paths[0]: {"scene": "海边", "description": "一只黑色猫戴草帽"},
+            paths[1]: {"scene": "屋顶", "description": "两只白色猫没有帽子"},
+        }
+        self.backend.get_search_resources = lambda: {
+            "model": SimpleNamespace(encode=lambda *_, **__: np.zeros((1, 2))),
+            "vector_index": SimpleNamespace(search=lambda *_: (np.array([[0.4, 0.3]]), np.array([[0, 1]]))),
+            "image_paths": paths, "metadata": catalogue,
+        }
+        self.backend.parse_query = lambda query: {"terms": {}, "expanded_query": query}
+        self.backend.rerank_score = lambda *_: (45, [])
+        self.backend.search_photos = Mock(return_value=(*paths, None, "离线候选报告", [], []))
+        questions = ["是在海边还是屋顶？", "猫是黑色还是白色？", "照片里是一只还是两只猫？", "是在海边还是屋顶？"]
+        chunks = [[SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="【行动】提问：" + q))])]
+                  for q in questions]
+        create = Mock(side_effect=chunks)
+        client = SimpleNamespace(close=Mock(), chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+        with patch("llm_explainer.get_deepseek_client", return_value=client):
+            app = self.app()
+            app.radio[0].set_value("精细搜索").run()
+            app.text_input(key="visitor_deepseek_key").set_value("offline-fixture-key").run()
+            app.checkbox(key="deepseek_consent").check().run()
+            first_id = app.session_state["current_conv_id"]
+            for clue in ["猫", "屋顶", "白色", "两只"]:
+                app.chat_input[0].set_value(clue).run()
+                self.assertEqual(list(app.exception), [])
+            first = app.session_state["conversations"][first_id]["messages"]
+            self.assertEqual(clarification_questions(first), questions[:3])
+            self.assertEqual(first[-1]["kind"], "results")
+            self.assertEqual(first[-1]["images"], paths)
+            self.assertEqual(create.call_count, 3)
+            self.backend.search_photos.assert_called_once_with(
+                "猫\n屋顶\n白色\n两只", client=None, allow_environment=False, include_explanation=False)
+            next(button for button in app.button if "新建对话" in button.label).click().run()
+            second_id = app.session_state["current_conv_id"]
+            app.chat_input[0].set_value("猫").run()
+            self.assertEqual(len(clarification_questions(app.session_state["conversations"][second_id]["messages"])), 1)
+            app.session_state["current_conv_id"] = first_id
+            app.run()
+            app.chat_input[0].set_value("戴帽子").run()
+            self.assertEqual(create.call_count, 4)  # only the new target received another question
+            self.assertEqual(len(clarification_questions(app.session_state["conversations"][first_id]["messages"])), 3)
+            self.assertEqual(list(app.exception), [])
 
 
 if __name__ == "__main__":

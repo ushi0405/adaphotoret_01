@@ -13,6 +13,7 @@ except ImportError:
     pass
 from llm_explainer import get_deepseek_client, safe_api_error
 from photo_query import build_photo_query
+from clarification_policy import clarification_questions, must_return_results, concise_question
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 LOCAL_MODE = os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
@@ -748,7 +749,8 @@ def ensure_greeting():
             "content": "你好～我是AdaphotoRet，你的私人记忆相册。想找哪张照片呢？可以直接告诉我哦！",
             "thinking": "",
             "images": [],
-            "report": ""
+            "report": "",
+            "kind": "greeting"
         }
         conv["messages"].append(greeting)
         save_all_conversations(st.session_state.conversations)
@@ -760,7 +762,7 @@ def get_current_messages():
     conv = get_current_conversation()
     return conv["messages"] if conv else []
 
-def add_message(role, content, thinking="", images=None, report=""):
+def add_message(role, content, thinking="", images=None, report="", kind=None):
     conv = get_current_conversation()
     if conv:
         conv["messages"].append({
@@ -768,7 +770,8 @@ def add_message(role, content, thinking="", images=None, report=""):
             "content": content,
             "thinking": thinking,
             "images": images or [],
-            "report": report
+            "report": report,
+            "kind": kind
         })
         save_all_conversations(st.session_state.conversations)
 
@@ -854,8 +857,28 @@ def run_assistant(user_message):
                 pass
 
 
+def show_search_results(query, client=None):
+    """Display real ranked candidates; no model-authored query or extra question."""
+    results = search_photos_tool(query, client=client)
+    imgs = [results["top1"], results["top2"], results["top3"]]
+    imgs = [img for img in imgs if img]
+    content = ("先展示最接近的候选照片，供你确认。" if imgs
+               else "未返回可展示的照片，请查看报告或调整查询。")
+    with st.chat_message("assistant"):
+        st.markdown(content)
+        if imgs:
+            cols = st.columns(len(imgs))
+            for col, img in zip(cols, imgs):
+                with col:
+                    render_image_tile(img, crop=False)
+        if results.get("report"):
+            with st.expander("📋 详细报告", expanded=False):
+                st.markdown(results["report"])
+    add_message("assistant", content, images=imgs, report=results.get("report", ""), kind="results")
+
+
 def _run_assistant_with_client(user_message, client):
-    # Snapshot only this conversation. Never derive retrieval text from model output.
+    # Retrieval evidence and dialogue-control history must remain separate.
     history = list(get_current_messages())
     query = build_photo_query(history, user_message)
     if not query:
@@ -867,135 +890,66 @@ def _run_assistant_with_client(user_message, client):
         st.error("检索资源暂时不可用，请检查模型下载和依赖后重试。")
         return
     add_message("user", user_message)
-    direct_search_ready = should_direct_search(preview_candidates)
+    # The existing reranker score is a heuristic, NOT a calibrated probability.
+    # Enforce exits before ANY provider call/stream, irrespective of model output.
+    if must_return_results(history, user_message, should_direct_search(preview_candidates)):
+        show_search_results(query)
+        return
+
     preview_lines = []
     for idx, item in enumerate(preview_candidates[:3], start=1):
         preview_lines.append(
-            f"{idx}. 路径:{item['path']}；分数:{item['score']}；场景:{item['scene']}；描述:{item['description']}；"
-            f"命中:{'、'.join(item['matched']) if item['matched'] else '无'}；不足:{'、'.join(item['missing']) if item['missing'] else '无'}"
+            f"{idx}. 场景:{item['scene']}；描述:{item['description']}；"
+            f"命中:{'、'.join(item['matched']) if item['matched'] else '无'}；"
+            f"不足:{'、'.join(item['missing']) if item['missing'] else '无'}"
         )
     preview_context = "\n".join(preview_lines) if preview_lines else "无候选"
+    asked = clarification_questions(history)
+    # Past questions help avoid repetitions, but are never inserted into query.
+    asked_context = "\n".join(asked) if asked else "无"
+    system_prompt = f"""你是照片检索助手 AdaphotoRet。优先展示候选照片，不要反复盘问。
+只把用户亲自描述的内容视为检索事实；助手问题、候选描述都不是用户确认的线索。
+仅当一个问题能区分现有候选时才提问：一次只问一个问题，不超过40字。
+不解释推理，不罗列食材，不重复问已经问过或用户已经回答过的特征。
+如果候选都缺少目标对象，直接检索展示最接近的候选，不要反复确认用户要不要它。
+同一照片对话最多提问3次；本轮之前已提问{len(asked)}次。无法有效缩小范围就检索。
+只输出以下一种格式，不要输出思考、解释或其他答复：
+【行动】提问：一个简短问题？
+【行动】检索：
 
-    # Keep raw user replies for dialogue control (e.g. repeated 不知道), while
-    # retrieval always uses the separate query above. No assistant/tool sources.
-    context = [{"role": "user", "content": m["content"]} for m in history
-               if m.get("role") == "user" and isinstance(m.get("content"), str)]
+已问过的问题（仅用于避免重复，不是检索事实）：
+{asked_context}
+
+照片库预检索候选（不是用户线索，不能补入查询）：
+{preview_context}"""
+    context = [{"role": "system", "content": system_prompt}]
+    context.extend({"role": "user", "content": m["content"]} for m in history
+                   if m.get("role") == "user" and isinstance(m.get("content"), str))
     context.append({"role": "user", "content": user_message})
-    system_prompt = f"""你是一个照片检索助手，名叫“AdaphotoRet”。你必须遵循以下原则：
-1. 你的默认任务是让最佳匹配照片符合用户输入。当用户的查询不够具体时，你应主动在【提问】中列出关键差异并给出选项。只依据下方用户线索，不得把你自己的问题或候选照片描述当作用户提供的事实。
-2. **意图整合规则（极其重要）**：
-   - 如果你问了一个具体特征（例如“是橘猫吗？”），而用户回答“记不清了”、“不知道”、“不确定”或类似表达，你必须立即丢弃该特征，不能再将其加入任何查询词。
-   - 在进行【检索】前，你必须重新审视整个对话，只使用用户亲自描述的有效信息。你问过的、但被用户否定或表示模糊的问题，一律不得使用。
-3. 你必须先参考下方“照片库预检索结果”判断是否已经有明确候选。如果最高分较高、与第二名差距明显，或照片库中只有少数候选命中核心对象，则不要继续追问，直接输出【行动】检索。
-4. 当连续两次追问都得到模糊回答（如“记不清楚”）时，必须立即根据已有确定线索输出照片。
-5. 当你认为有70%以上信心时，必须停止追问，直接检索。
-6. **检索关键词生成规则**：
-   - 程序已按当前对话合并全部用户线索；请据此选择提问、检索或回答。
-   - 只能使用用户明确描述的有效词语，绝对不能使用已被用户否定或表示模糊的特征。
-   - 绝对不能使用“回答”、“提供”、“信息”、“找到”、“想要”、“不够”、“准确”、“请”、“告诉”、“需要”、“调整”等系统引导词。
-7. 展示照片后，必须在末尾追问“这里有您想要的照片吗？如果不够准确，请告诉我哪里需要调整。”
-8. 回复格式必须严格为：
-   【思考】简要、可核验的检索依据（不输出内部推理过程）
-   【行动】“提问：你的问题内容” 或 “检索：优化后的查询词” 或 “回答：你的最终答复（包含追问）”
-不要输出其他内容。
+    full_response = ""
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat", messages=context, temperature=0.3,
+            max_tokens=120, stream=True,
+        )
+        # Buffer first: unvalidated streams can contain a fourth/long question.
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                full_response += chunk.choices[0].delta.content
+    except Exception as exc:
+        # Local retrieval remains available even if the optional dialogue fails.
+        st.info(safe_api_error(exc))
+        show_search_results(query)
+        return
 
-照片库预检索结果：
-{preview_context}
-
-预检索判断：{"已有高置信候选，应直接检索，不要追问。" if direct_search_ready else "候选仍不明确，可以在必要时追问。"}"""
-    context.insert(0, {"role": "system", "content": system_prompt})
-
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        try:
-            response = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=context,
-                temperature=0.3,
-                max_tokens=400,
-                stream=True,
-            )
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
-        except Exception as e:
-            full_response = safe_api_error(e)
-            message_placeholder.error(full_response)
-            add_message("assistant", full_response)
-            return
-
-    thinking_part = ""
-    action_part = ""
-    if "【行动】" in full_response:
-        parts = full_response.split("【行动】")
-        thinking_part = parts[0].replace("【思考】", "").strip()
-        action_part = parts[1].strip()
+    question = concise_question(full_response, [*history, {"role": "user", "content": user_message}], preview_candidates)
+    if question:
+        with st.chat_message("assistant"):
+            st.markdown(question)
+        add_message("assistant", question, kind="clarification")
     else:
-        thinking_part = full_response.replace("【思考】", "").strip()
-        # A missing/malformed action never triggers another query-writing LLM call.
-        action_part = "检索："
-
-    if not action_part.startswith(("提问：", "检索：", "回答：")):
-        action_part = "检索："
-
-    if action_part.startswith("提问："):
-        question = action_part.replace("提问：", "").strip()
-        if direct_search_ready:
-            results = search_photos_tool(query, client=client)
-            imgs = [results["top1"], results["top2"], results["top3"]]
-            content = ("我先根据当前照片库中最明确的候选直接检索。这里有您想要的照片吗？如果不够准确，请告诉我哪里需要调整。"
-                       if any(imgs) else "未返回可展示的照片，请查看报告或调整查询。")
-            if any(imgs):
-                col_count = sum(1 for img in imgs if img is not None)
-                if col_count > 0:
-                    cols = st.columns(col_count)
-                    col_idx = 0
-                    for img in imgs:
-                        if img:
-                            with cols[col_idx]:
-                                render_image_tile(img, crop=False)
-                            col_idx += 1
-            if results.get("report"):
-                with st.expander("📋 详细报告", expanded=True):
-                    st.markdown(results["report"])
-            message_placeholder.markdown(f"**思考：** {thinking_part}\n\n{content}")
-            add_message("assistant", content, thinking=thinking_part,
-                        images=[img for img in imgs if img], report=results.get("report", ""))
-        else:
-            message_placeholder.markdown(f"**思考：** {thinking_part}\n\n{question}")
-            add_message("assistant", question, thinking=thinking_part)
-    elif action_part.startswith("检索："):
-        results = search_photos_tool(query, client=client)
-        imgs = [results["top1"], results["top2"], results["top3"]]
-        content = ("我找到了以下照片。这里有您想要的照片吗？如果没有，请告诉我需要调整的地方。"
-                   if any(imgs) else "未返回可展示的照片，请查看报告或调整查询。")
-        if any(imgs):
-            col_count = sum(1 for img in imgs if img is not None)
-            if col_count > 0:
-                cols = st.columns(col_count)
-                col_idx = 0
-                for img in imgs:
-                    if img:
-                        with cols[col_idx]:
-                            render_image_tile(img, crop=False)
-                        col_idx += 1
-        if results.get("report"):
-            with st.expander("📋 详细报告", expanded=True):
-                st.markdown(results["report"])
-        message_placeholder.markdown(f"**思考：** {thinking_part}\n\n{content}")
-        add_message("assistant", content, thinking=thinking_part,
-                    images=[img for img in imgs if img], report=results.get("report", ""))
-    elif action_part.startswith("回答："):
-        answer = action_part.replace("回答：", "").strip()
-        message_placeholder.markdown(f"**思考：** {thinking_part}\n\n{answer}")
-        add_message("assistant", answer, thinking=thinking_part)
-    else:
-        fallback = "抱歉，请再描述一下。"
-        message_placeholder.markdown(fallback)
-        add_message("assistant", fallback, thinking=thinking_part)
+        # Malformed actions, freeform answers, repeated/long questions cannot loop.
+        show_search_results(query, client=client)
 
 # ---------- 全局照片检索页面 ----------
 def show_global_search():
@@ -1264,7 +1218,8 @@ def show_fine_retrieval():
         else:
             with st.chat_message("assistant"):
                 if msg.get("thinking"):
-                    st.caption(f"🧠 {msg['thinking']}")
+                    with st.expander("检索依据", expanded=False):
+                        st.caption(msg["thinking"])
                 if msg.get("content"):
                     st.write(msg["content"])
                 if msg.get("images"):
@@ -1273,10 +1228,10 @@ def show_fine_retrieval():
                         with cols[i]:
                             render_image_tile(img_path, crop=False)
                 if msg.get("report"):
-                    with st.expander("📋 详细报告", expanded=True):
+                    with st.expander("📋 详细报告", expanded=False):
                         st.markdown(msg["report"])
 
-    st.caption("同一对话会合并你提供的全部照片线索，不使用助手回复作为线索。寻找另一张照片，请点击「＋ 新建对话」。")
+    st.caption("同一照片最多澄清3次；线索足够或输入「直接给结果」时立即展示候选。只合并你的线索，不使用助手回复；找另一张照片请点击「＋ 新建对话」。")
     # 输入框
     if not fine_search_ready():
         st.info("精细检索需要你的 DeepSeek API 密钥及发送数据同意；请在侧边栏配置。全局搜索与照片库可直接使用。")

@@ -114,7 +114,7 @@ def test_every_ui_search_branch_uses_same_user_only_query(response, direct):
     create = Mock(return_value=[chunk])
     client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
     placeholder = SimpleNamespace(markdown=Mock(), error=Mock())
-    st = SimpleNamespace(info=Mock(), error=Mock(), chat_message=lambda *_: nullcontext(), empty=lambda: placeholder)
+    st = SimpleNamespace(info=Mock(), error=Mock(), markdown=Mock(), chat_message=lambda *_: nullcontext(), empty=lambda: placeholder)
     preview = Mock(return_value=[])
     search = Mock(return_value={"top1": None, "top2": None, "top3": None, "report": ""})
     def add(role, content, **kwargs):
@@ -125,11 +125,12 @@ def test_every_ui_search_branch_uses_same_user_only_query(response, direct):
     scope["_run_assistant_with_client"]("橘色的", client)
     expected = "屋顶上的猫\n橘色的"
     preview.assert_called_once_with(expected, top_k=5)
-    search.assert_called_once_with(expected, client=client)
+    search.assert_called_once_with(expected, client=None if direct else client)
     assert [m["content"] for m in history if m["role"] == "user"] == ["屋顶上的猫", "橘色的"]
-    assert create.call_count == 1  # no secondary query-rewrite provider call
-    assert create.call_args.kwargs["messages"][1:] == [
-        {"role": "user", "content": "屋顶上的猫"}, {"role": "user", "content": "橘色的"}]
+    assert create.call_count == (0 if direct else 1)  # confident search bypasses provider
+    if not direct:
+        assert create.call_args.kwargs["messages"][1:] == [
+            {"role": "user", "content": "屋顶上的猫"}, {"role": "user", "content": "橘色的"}]
 
 
 def test_empty_noise_does_not_preview_or_call_provider():
@@ -152,7 +153,7 @@ def test_unclear_replies_reach_dialogue_control_but_not_retrieval():
     create = Mock(return_value=[chunk])
     client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
     placeholder = SimpleNamespace(markdown=Mock(), error=Mock())
-    st = SimpleNamespace(info=Mock(), error=Mock(), chat_message=lambda *_: nullcontext(), empty=lambda: placeholder)
+    st = SimpleNamespace(info=Mock(), error=Mock(), markdown=Mock(), chat_message=lambda *_: nullcontext(), empty=lambda: placeholder)
     preview = Mock(return_value=[])
     search = Mock(return_value={"top1": None, "top2": None, "top3": None, "report": ""})
     scope = ui_functions("_run_assistant_with_client", st=st, preview_search_candidates=preview,
@@ -160,7 +161,5 @@ def test_unclear_replies_reach_dialogue_control_but_not_retrieval():
                          should_direct_search=lambda _: False, search_photos_tool=search)
     scope["_run_assistant_with_client"]("记不清了", client)
     preview.assert_called_once_with("猫", top_k=5)
-    search.assert_called_once_with("猫", client=client)
-    assert create.call_args.kwargs["messages"][1:] == [
-        {"role": "user", "content": "猫"}, {"role": "user", "content": "不知道"},
-        {"role": "user", "content": "记不清了"}]
+    search.assert_called_once_with("猫", client=None)
+    create.assert_not_called()  # unclear replies now deterministically stop questioning
