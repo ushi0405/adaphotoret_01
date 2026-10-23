@@ -13,9 +13,13 @@ from io import BytesIO
 from PIL import Image, ImageOps, UnidentifiedImageError
 import unittest
 from photo_query import build_photo_query
-from score_report import ensure_score_explanations
+from photo_report_narrative import ensure_score_explanations
 from clarification_policy import clarification_questions, must_return_results, concise_question
 from unittest.mock import Mock, patch
+from photo_library_store import (
+    empty_library, normalize_library, load_local_library, save_local_library, queue_browser_save,
+    new_browser_state, consume_browser_event, LibraryDataError,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("tested_explainer", ROOT / "llm_explainer.py")
@@ -35,7 +39,10 @@ def ui_functions(*names, **variables):
              "clarification_questions": clarification_questions,
              "must_return_results": must_return_results, "concise_question": concise_question,
              "safe_api_error": EXPLAINER.safe_api_error,
-             "ensure_score_explanations": ensure_score_explanations, **variables}
+             "ensure_score_explanations": ensure_score_explanations, "metadata": {},
+             "empty_library": empty_library, "normalize_library": normalize_library, "load_local_library": load_local_library,
+             "save_local_library": save_local_library, "queue_browser_save": queue_browser_save,
+             "LibraryDataError": LibraryDataError, **variables}
     exec(compile(ast.Module(body=definitions, type_ignores=[]), "ui_helpers", "exec"), scope)
     return scope
 
@@ -138,13 +145,21 @@ class CredentialTests(unittest.TestCase):
 
 class SessionStorageTests(unittest.TestCase):
     def test_public_history_and_libraries_never_read_or_write_files(self):
+        state = new_browser_state()
+        consume_browser_event(state, {"kind": "loaded", "event_id": "load", "request_id": state["request"]["id"],
+                                      "revision": None, "data": empty_library()})
+        class Session(dict):
+            __getattr__ = dict.__getitem__
+            __setattr__ = dict.__setitem__
+        st = SimpleNamespace(session_state=Session(photo_library_storage=state))
         scope = ui_functions("load_all_conversations", "save_all_conversations", "load_photo_library_data",
-                             "save_photo_library_data", LOCAL_MODE=False)
+                             "save_photo_library_data", LOCAL_MODE=False, st=st)
         with patch("builtins.open", side_effect=AssertionError("public state must not access files")):
             self.assertEqual(scope["load_all_conversations"](), {})
             scope["save_all_conversations"]({"one-session": {}})
             self.assertEqual(scope["load_photo_library_data"](), {"photo_tags": {}, "libraries": {}})
             scope["save_photo_library_data"]({"libraries": {"private": {}}})
+            self.assertEqual(state["phase"], "saving")
 
     def test_distinct_sessions_receive_distinct_empty_libraries(self):
         scope = ui_functions("load_photo_library_data", LOCAL_MODE=False)
@@ -259,8 +274,39 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.backend = backend
         self.backend_patch = patch("backend_resources._load_backend", return_value=backend)
         self.backend_patch.start()
+        # Streamlit 1.54 AppTest mocks the entire Runtime, including the v2
+        # component registry. Supply its real registry to verify protobuf
+        # mounting instead of allowing MagicMock strings to crash the app.
+        from streamlit.components.v2.component_manager import BidiComponentManager
+        app_test_module = importlib.import_module("streamlit.testing.v1.app_test")
+        real_mock, manager = app_test_module.MagicMock, BidiComponentManager()
+        def runtime_mock(*args, **kwargs):
+            runtime = real_mock(*args, **kwargs)
+            runtime.bidi_component_registry = manager
+            return runtime
+        self.runtime_patch = patch.object(app_test_module, "MagicMock", side_effect=runtime_mock)
+        self.runtime_patch.start()
+        self.registry_patch = patch("streamlit.components.v2.get_bidi_component_manager", return_value=manager)
+        self.registry_patch.start()
+        import browser_library
+        importlib.reload(browser_library)
+        # AppTest does not execute JavaScript. Model the documented component
+        # events here; JS protocol/transaction behavior has separate tests.
+        def browser_event(request):
+            if request["op"] == "load":
+                return {"kind": "loaded", "event_id": request["id"], "request_id": request["id"],
+                        "revision": None, "data": empty_library()}
+            if request["op"] == "save":
+                return {"kind": "saved", "event_id": request["id"], "request_id": request["id"], "revision": "a" * 64}
+        from browser_library import browser_library_bridge
+        self.actual_browser_bridge = browser_library_bridge
+        self.browser_patch = patch("browser_library.browser_library_bridge", side_effect=browser_event)
+        self.browser_bridge = self.browser_patch.start()
 
     def tearDown(self):
+        self.browser_patch.stop()
+        self.registry_patch.stop()
+        self.runtime_patch.stop()
         self.backend_patch.stop()
         self.st.cache_resource.clear()
         self.environment_patch.stop()
@@ -315,6 +361,88 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertEqual(list(first.exception), [])
         self.assertEqual(list(second.exception), [])
 
+    def test_library_mutations_are_disabled_until_browser_restore(self):
+        self.browser_bridge.side_effect = self.actual_browser_bridge
+        app = self.app()
+        app.radio[0].set_value("照片库").run()
+        for label in ("保存照片库", "加入照片库并打标签", "清空自定义照片库和标签", "合并导入备份"):
+            self.assertTrue(next(button for button in app.button if button.label == label).disabled)
+        self.assertEqual(app.session_state["photo_library_data"], empty_library())
+        self.assertTrue(any("正在读取" in item.value for item in app.info))
+
+    def test_preupgrade_session_library_migrates_after_restore_not_before(self):
+        app = self.AppTest.from_file(str(ROOT / "streamlit_ui.py"), default_timeout=180)
+        old = {"photo_tags": {}, "libraries": {"升级前相册": {"photos": [], "tags": ["保留"]}}}
+        app.session_state["photo_library_data"] = old
+        app.run()
+        self.assertEqual(list(app.exception), [])
+        self.assertEqual(app.session_state["photo_library_data"], old)
+        self.assertTrue(app.session_state["photo_library_storage"]["saved"])
+        operations = [call.args[0]["op"] for call in self.browser_bridge.call_args_list]
+        self.assertLess(operations.index("load"), operations.index("save"))
+
+    def test_overlimit_preupgrade_session_is_exportable_without_crashing_or_overwriting_browser(self):
+        app = self.AppTest.from_file(str(ROOT / "streamlit_ui.py"), default_timeout=180)
+        old = {"photo_tags": {}, "libraries": {"x" * 201: {"photos": [], "tags": []}}}
+        app.session_state["photo_library_data"] = old
+        app.run()
+        app.radio[0].set_value("照片库").run()
+        self.assertEqual(list(app.exception), [])
+        self.assertEqual(json.loads(app.session_state["photo_library_legacy_backup"]), old)
+        self.assertEqual(app.session_state["photo_library_data"], empty_library())
+        self.assertNotIn("save", [call.args[0]["op"] for call in self.browser_bridge.call_args_list])
+
+    def test_library_simulated_refresh_and_confirmed_delete_restore(self):
+        from copy import deepcopy
+        stored = empty_library()
+        def bridge(request):
+            nonlocal stored
+            if request["op"] == "load":
+                return {"kind": "loaded", "event_id": request["id"], "request_id": request["id"],
+                        "data": deepcopy(stored), "revision": "c" * 64}
+            if request["op"] == "save":
+                stored = deepcopy(request["data"])
+                return {"kind": "saved", "event_id": request["id"], "request_id": request["id"], "revision": "c" * 64}
+        self.browser_bridge.side_effect = bridge
+        first = self.app()
+        first.radio[0].set_value("照片库").run()
+        next(widget for widget in first.text_input if widget.label == "照片库名称").set_value("新建").run()
+        next(button for button in first.button if button.label == "保存照片库").click().run()
+        self.assertIn("新建", stored["libraries"])
+        fresh = self.app()  # New Python session; explicit fixture simulates same browser document.
+        fresh.radio[0].set_value("照片库").run()
+        next(widget for widget in fresh.selectbox if widget.label == "编辑照片库").set_value("新建").run()
+        self.assertTrue(next(button for button in fresh.button if button.label == "删除照片库").disabled)
+        fresh.checkbox(key="confirm_delete_library:新建").check().run()
+        next(button for button in fresh.button if button.label == "删除照片库").click().run()
+        self.assertNotIn("新建", stored["libraries"])
+        again = self.app()
+        self.assertEqual(again.session_state["photo_library_data"], empty_library())
+        self.assertEqual(list(fresh.exception), [])
+
+    def test_library_clear_resets_confirmation_and_keeps_catalogue(self):
+        app = self.app()
+        app.session_state["photo_library_data"] = {"photo_tags": {"x.jpg": ["tag"]},
+                                                    "libraries": {"album": {"photos": ["x.jpg"], "tags": []}}}
+        app.radio[0].set_value("照片库").run()
+        self.assertTrue(app.button(key="clear_photo_library").disabled)
+        app.checkbox(key="confirm_clear_photo_library").check().run()
+        app.button(key="clear_photo_library").click().run()
+        self.assertEqual(app.session_state["photo_library_data"], empty_library())
+        self.assertFalse(app.checkbox(key="confirm_clear_photo_library").value)
+        self.assertTrue(len(app.get("imgs")) > 0)
+        self.assertEqual(list(app.exception), [])
+
+    def test_invalid_tag_never_replaces_valid_library_or_loses_backup_data(self):
+        app = self.app()
+        app.radio[0].set_value("照片库").run()
+        app.session_state["selected_tag_paths"] = [next(iter(self.backend.load_metadata()))]
+        next(widget for widget in app.text_input if widget.label == "本次添加的标签").set_value("x" * 201).run()
+        next(button for button in app.button if button.label == "加入照片库并打标签").click().run()
+        self.assertEqual(app.session_state["photo_library_data"], empty_library())
+        self.assertTrue(any("本次修改未保存" in item.value for item in app.error))
+        self.assertEqual(list(app.exception), [])
+
     def test_new_conversation_and_switching_keep_photo_clues_separate(self):
         app = self.app()
         app.radio[0].set_value("精细搜索").run()
@@ -357,7 +485,7 @@ class StreamlitInteractionTests(unittest.TestCase):
         self.assertEqual(list(app.exception), [])
         rendered = "\n".join(item.value for item in app.markdown)
         self.assertIn("逐图评分说明", rendered)
-        self.assertIn("最终得分76（非概率）", rendered)
+        self.assertIn("已有识别", rendered)
         self.assertIn("命中实体: 大门", rendered)
         self.assertEqual(conv["messages"][-1]["report"], report)
         self.backend.search_photos.assert_not_called()

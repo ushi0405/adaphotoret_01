@@ -13,9 +13,14 @@ try:
 except ImportError:
     pass
 from llm_explainer import get_deepseek_client, safe_api_error
-from score_report import ensure_score_explanations
+from photo_report_narrative import ensure_score_explanations
 from photo_query import build_photo_query
 from clarification_policy import clarification_questions, must_return_results, concise_question
+from photo_library_store import (
+    LibraryDataError, empty_library, normalize_library, load_local_library, save_local_library,
+    export_library, export_legacy_library, import_library, merge_libraries, new_browser_state,
+    queue_browser_save, consume_browser_event, request_browser_reload,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 LOCAL_MODE = os.getenv("ADAPHOTORET_LOCAL_MODE", "0") == "1"
@@ -445,39 +450,112 @@ if "selected_tag_paths" not in st.session_state:
     st.session_state.selected_tag_paths = []
 
 def load_photo_library_data():
-    if LOCAL_MODE and PHOTO_LIBRARY_FILE.is_file():
+    if LOCAL_MODE:
         try:
-            with open(PHOTO_LIBRARY_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if not isinstance(data, dict):
-                data = {}
+            return load_local_library(PHOTO_LIBRARY_FILE)
         except (OSError, ValueError):
-            st.warning("本地照片库配置无法读取，已使用空配置；原文件未更改。")
-            data = {}
-    else:
-        data = {}
-    data.setdefault("photo_tags", {})
-    data.setdefault("libraries", {})
-    for config in data["libraries"].values():
-        config.setdefault("photos", [])
-        config.setdefault("tags", [])
-        for tag in config.pop("aliases", []):
-            if tag not in config["tags"]:
-                config["tags"].append(tag)
-        for aliases in config.pop("sections", {}).values():
-            for tag in aliases:
-                if tag not in config["tags"]:
-                    config["tags"].append(tag)
-    return data
+            st.session_state["photo_library_local_error"] = True
+    return empty_library()
 
 def save_photo_library_data(data):
-    if LOCAL_MODE:
-        STATE_DIR.mkdir(parents=True, exist_ok=True)
-        with open(PHOTO_LIBRARY_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+    try:
+        validated = normalize_library(data)
+        if LOCAL_MODE:
+            if st.session_state.get("photo_library_local_error"):
+                raise LibraryDataError("本地配置未读取成功；原文件未更改，请先检查或恢复备份。")
+            save_local_library(PHOTO_LIBRARY_FILE, validated)
+        else:
+            queue_browser_save(st.session_state.photo_library_storage, validated)
+        st.session_state.photo_library_data = validated
+        st.session_state.pop("photo_library_save_error", None)
+        return True
+    except (OSError, LibraryDataError) as error:
+        st.session_state["photo_library_save_error"] = str(error) if isinstance(error, LibraryDataError) else "本地保存失败，请检查目录权限和磁盘空间。"
+        return False
 
 if "photo_library_data" not in st.session_state:
     st.session_state.photo_library_data = load_photo_library_data()
+if not LOCAL_MODE:
+    from browser_library import browser_library_bridge
+    if "photo_library_storage" not in st.session_state:
+        st.session_state.photo_library_storage = new_browser_state()
+        # Keep libraries created in an already-open pre-upgrade session. Only
+        # merge after browser restore, never overwrite browser data with defaults.
+        try:
+            previous_library = normalize_library(st.session_state.photo_library_data)
+        except LibraryDataError:
+            st.session_state.photo_library_legacy_issue = True
+            try:
+                st.session_state.photo_library_legacy_backup = export_legacy_library(st.session_state.photo_library_data)
+            except LibraryDataError:
+                pass
+            previous_library = empty_library()
+            st.session_state.photo_library_data = empty_library()
+        if previous_library != empty_library():
+            st.session_state.photo_library_migration = previous_library
+    library_store = st.session_state.photo_library_storage
+    library_request = library_store["request"]
+    restored_library = consume_browser_event(library_store, browser_library_bridge(library_request))
+    if restored_library is not None:
+        st.session_state.photo_library_data = restored_library
+        st.session_state.pop("photo_library_save_error", None)
+        previous_library = st.session_state.pop("photo_library_migration", None)
+        if previous_library:
+            try:
+                migrated = merge_libraries(restored_library, previous_library)
+                if migrated != restored_library:
+                    save_photo_library_data(migrated)
+            except LibraryDataError:
+                st.session_state.photo_library_data = previous_library
+                library_store.update(phase="error", error="migration", request={"op": "watch"})
+    if library_store["request"] != library_request:
+        st.rerun()  # mount the acknowledged watch immediately, even without another click
+
+def photo_library_writable():
+    if LOCAL_MODE:
+        return not st.session_state.get("photo_library_local_error", False)
+    return st.session_state.photo_library_storage["phase"] == "ready"
+
+def show_photo_library_storage():
+    if st.session_state.get("photo_library_legacy_issue"):
+        st.warning("旧会话的相册名称、标签长度或格式不符合新格式，尚未自动写入浏览器；浏览器已有内容未覆盖。请先下载下方旧会话备份，修正格式后再合并导入。")
+        if st.session_state.get("photo_library_legacy_backup"):
+            st.caption("旧会话原始备份（与下方当前浏览器图库备份不同）：")
+            from browser_library import browser_library_download
+            browser_library_download(st.session_state.photo_library_legacy_backup, key="legacy_photo_library_backup")
+    if LOCAL_MODE:
+        if st.session_state.get("photo_library_local_error"):
+            st.error("本地照片库配置无法读取，已暂停修改；原文件未覆盖。请检查本地文件或恢复备份后重启。")
+        else:
+            st.caption("照片库配置保存在本机 .local_data 中；删除相册不会删除原照片。")
+    else:
+        state = st.session_state.photo_library_storage
+        st.caption("自定义相册、照片归类和标签保存在当前浏览器，刷新后自动恢复；不保存原图、对话或 API 密钥。")
+        st.caption("不跨设备同步；同一浏览器配置文件的使用者可访问这些标签。清除网站数据、无痕模式或浏览器存储限制可能导致丢失，请定期导出备份。")
+        phase = state["phase"]
+        if phase == "loading":
+            st.info("正在读取此浏览器的照片库，完成前暂不能修改。若一直未完成，请检查浏览器是否允许此站点运行脚本和使用存储。")
+        elif phase == "saving":
+            st.info("正在保存到此浏览器，请等待“已保存”后再刷新或关闭页面。")
+        elif phase == "ready":
+            st.caption("✓ 已保存到此浏览器" if state["saved"] else "✓ 已读取此浏览器的照片库")
+        elif phase == "conflict":
+            st.warning("另一标签页修改了照片库，本次改动未覆盖它。请先导出本页备份，再重新读取已保存版本，之后可合并导入备份。")
+        else:
+            messages = {
+                "quota": "浏览器存储空间不足，本次改动未保存，原有保存内容未覆盖。请导出本页备份并释放空间。",
+                "invalid": "浏览器照片库格式异常或不受支持，未覆盖原有内容。请检查备份或浏览器网站数据。",
+                "unsupported": "此浏览器不支持安全的多标签页保存，本次改动未保存。请使用新版浏览器，并导出本页备份。",
+                "migration": "旧会话与浏览器照片库合并后超过容量，浏览器原有内容未覆盖。请先导出本页旧会话备份，再重新读取浏览器版本。",
+            }
+            st.error(messages.get(state["error"], "无法访问浏览器存储，本次改动未保存。请允许网站存储、退出无痕模式或导出本页备份。"))
+        if phase in {"error", "conflict", "loading"}:
+            if st.button("重新读取浏览器已保存版本（放弃本页未保存改动）", key="reload_photo_library"):
+                request_browser_reload(state)
+                st.session_state.pop("photo_library_save_error", None)
+                st.rerun()
+    if st.session_state.get("photo_library_save_error"):
+        st.error("本次修改未保存，原有内容未更改。" + st.session_state.photo_library_save_error)
 
 def split_tags(text):
     raw = (text or "").replace("，", ",").replace("；", ";").replace("、", ",")
@@ -504,16 +582,20 @@ def get_photo_tags(path):
     return st.session_state.photo_library_data.get("photo_tags", {}).get(path, [])
 
 def add_tags_to_photos(paths, tags):
-    data = st.session_state.photo_library_data
+    if not photo_library_writable():
+        return False
+    data = normalize_library(st.session_state.photo_library_data)
     for path in paths:
         existing = data["photo_tags"].setdefault(path, [])
         for tag in tags:
             if tag not in existing:
                 existing.append(tag)
-    save_photo_library_data(data)
+    return save_photo_library_data(data)
 
 def add_photos_to_library(paths, library_name, tags=None):
-    data = st.session_state.photo_library_data
+    if not photo_library_writable():
+        return False
+    data = normalize_library(st.session_state.photo_library_data)
     library = data["libraries"].setdefault(library_name, {"photos": [], "tags": []})
     library.setdefault("photos", [])
     library.setdefault("tags", [])
@@ -523,11 +605,17 @@ def add_photos_to_library(paths, library_name, tags=None):
     for tag in tags or []:
         if tag not in library["tags"]:
             library["tags"].append(tag)
-    add_tags_to_photos(paths, tags or [])
-    save_photo_library_data(data)
+    for path in paths:
+        existing = data["photo_tags"].setdefault(path, [])
+        for tag in tags or []:
+            if tag not in existing:
+                existing.append(tag)
+    return save_photo_library_data(data)
 
 def remove_tag_from_photo(path, tag):
-    data = st.session_state.photo_library_data
+    if not photo_library_writable():
+        return False
+    data = normalize_library(st.session_state.photo_library_data)
     tags = data.get("photo_tags", {}).get(path, [])
     if tag in tags:
         tags.remove(tag)
@@ -535,7 +623,7 @@ def remove_tag_from_photo(path, tag):
         data["photo_tags"][path] = tags
     else:
         data.get("photo_tags", {}).pop(path, None)
-    save_photo_library_data(data)
+    return save_photo_library_data(data)
 
 def has_location(info):
     loc = info.get("location", {}) if isinstance(info.get("location"), dict) else {}
@@ -784,7 +872,7 @@ def search_photos_tool(query, client=None):
         table_data, top_results = [], []
     # Keep this outside the search exception handler: explanation display must
     # never turn already-retrieved photos into a failed/empty search.
-    report = ensure_score_explanations(report, query, top_results)
+    report = ensure_score_explanations(report, query, top_results, metadata=metadata)
     return {
         "top1": top1,
         "top2": top2,
@@ -1011,6 +1099,8 @@ def show_global_search():
             st.rerun()
 
 def show_photo_libraries():
+    if st.session_state.pop("photo_library_clear_done", False):
+        st.session_state.confirm_clear_photo_library = False
     st.markdown(
         """
         <div class="ada-page-title">
@@ -1021,7 +1111,9 @@ def show_photo_libraries():
         unsafe_allow_html=True,
     )
 
-    data = st.session_state.photo_library_data
+    show_photo_library_storage()
+    writable = photo_library_writable()
+    data = normalize_library(st.session_state.photo_library_data)
     auto_libraries = build_auto_libraries()
     custom_configs = data.get("libraries", {})
     custom_libraries = {name: custom_library_matches(config) for name, config in custom_configs.items()}
@@ -1037,10 +1129,9 @@ def show_photo_libraries():
         library_names = [f"自动 · {name}" for name in auto_libraries] + [f"自定义 · {name}" for name in custom_libraries]
         if not library_names:
             st.caption("暂无照片库")
-            return
-        selected = st.selectbox("选择照片库", library_names, label_visibility="collapsed")
-        is_custom = selected.startswith("自定义 · ")
-        lib_name = selected.replace("自动 · ", "").replace("自定义 · ", "")
+        selected = st.selectbox("选择照片库", library_names, label_visibility="collapsed", disabled=not library_names)
+        is_custom = bool(selected and selected.startswith("自定义 · "))
+        lib_name = selected.split(" · ", 1)[1] if selected else ""
 
         if is_custom:
             config = custom_configs.get(lib_name, {})
@@ -1063,32 +1154,63 @@ def show_photo_libraries():
 
     with tab_manage:
         st.markdown("##### 自建照片库")
-        existing_names = ["新建"] + sorted(custom_configs.keys())
-        target = st.selectbox("编辑照片库", existing_names)
-        current = custom_configs.get(target, {}) if target != "新建" else {}
-        library_name = st.text_input("照片库名称", value="" if target == "新建" else target, placeholder="例如：儿子成长记录")
+        existing_names = [None] + sorted(custom_configs.keys())
+        target = st.selectbox("编辑照片库", existing_names, format_func=lambda name: "新建照片库" if name is None else name)
+        current = custom_configs.get(target, {}) if target is not None else {}
+        library_name = st.text_input("照片库名称", value="" if target is None else target, max_chars=200, placeholder="例如：儿子成长记录")
         col_save, col_delete = st.columns([1, 1])
         with col_save:
-            if st.button("保存照片库", width="stretch"):
+            if st.button("保存照片库", width="stretch", disabled=not writable):
                 name = library_name.strip()
-                if name:
-                    if target != "新建" and target != name:
+                if name and name != target and name in custom_configs:
+                    st.error("该名称已存在，请选择其他名称；原有照片库未改动。")
+                elif name:
+                    if target is not None and target != name:
                         custom_configs.pop(target, None)
                     custom_configs.setdefault(name, current or {"photos": [], "tags": []})
                     custom_configs[name].setdefault("photos", [])
                     custom_configs[name].setdefault("tags", [])
                     data["libraries"] = custom_configs
                     save_photo_library_data(data)
-                    st.success("已保存")
                     st.rerun()
         with col_delete:
-            if target != "新建" and st.button("删除照片库", width="stretch"):
-                custom_configs.pop(target, None)
-                data["libraries"] = custom_configs
-                save_photo_library_data(data)
-                st.rerun()
-        if target != "新建" and current:
+            if target is not None:
+                confirmed = st.checkbox(f"确认删除相册「{target}」（保留原照片和标签）", key=f"confirm_delete_library:{target}")
+                if st.button("删除照片库", width="stretch", disabled=not (writable and confirmed)):
+                    custom_configs.pop(target, None)
+                    data["libraries"] = custom_configs
+                    save_photo_library_data(data)
+                    st.rerun()
+        if target is not None and current:
             st.caption(f"{len(current.get('photos', []))} 张照片 · 标签：{', '.join(current.get('tags', [])) or '暂无'}")
+
+        with st.expander("备份、恢复与清空"):
+            st.caption("备份仅含相册名称、照片引用和标签，不含原图、对话或 API 密钥。换浏览器时可手动导入；同名相册合并，不覆盖已有归类。")
+            try:
+                backup = export_library(data)
+            except LibraryDataError:
+                backup = None
+            if backup is not None:
+                from browser_library import browser_library_download
+                browser_library_download(backup)
+            uploaded = st.file_uploader("选择照片库 JSON 备份（最多 2 MB）", type=["json"],
+                                        max_upload_size=2, key="import_photo_library")
+            if st.button("合并导入备份", disabled=not (writable and uploaded), key="merge_photo_library"):
+                try:
+                    merged = merge_libraries(data, import_library(uploaded.getvalue()))
+                    if save_photo_library_data(merged):
+                        st.session_state.photo_library_data = merged
+                        st.rerun()
+                except LibraryDataError as error:
+                    st.error(str(error))
+            clear_confirmed = st.checkbox("确认清空所有自定义相册和手动标签（保留原照片）", key="confirm_clear_photo_library")
+            if st.button("清空自定义照片库和标签", disabled=not (writable and clear_confirmed), key="clear_photo_library"):
+                cleared = empty_library()
+                if save_photo_library_data(cleared):
+                    st.session_state.photo_library_data = cleared
+                    st.session_state.selected_tag_paths = []
+                    st.session_state.photo_library_clear_done = True
+                    st.rerun()
 
     with tab_tag:
         st.markdown("##### 看图选择并归类")
@@ -1117,13 +1239,12 @@ def show_photo_libraries():
 
         action_col, select_col = st.columns([1, 1])
         with action_col:
-            if st.button("加入照片库并打标签", width="stretch", disabled=not available_libraries):
+            if st.button("加入照片库并打标签", width="stretch", disabled=not (available_libraries and writable)):
                 tags = split_tags(tags_text)
                 selected_paths = [p for p in st.session_state.selected_tag_paths if p in image_paths]
                 if selected_paths and target_library:
-                    add_photos_to_library(selected_paths, target_library, tags)
-                    st.session_state.selected_tag_paths = []
-                    st.success("已归类")
+                    if add_photos_to_library(selected_paths, target_library, tags):
+                        st.session_state.selected_tag_paths = []
                     st.rerun()
         with select_col:
             if st.button("选择当前筛选范围（含未展开照片）", width="stretch"):
@@ -1231,7 +1352,7 @@ def show_fine_retrieval():
                             render_image_tile(img_path, crop=False)
                 if msg.get("report"):
                     with st.expander("📋 详细报告", expanded=False):
-                        st.markdown(ensure_score_explanations(msg["report"]))
+                        st.markdown(ensure_score_explanations(msg["report"], metadata=metadata))
 
     st.caption("同一照片最多澄清3次；线索足够或输入「直接给结果」时立即展示候选。只合并你的线索，不使用助手回复；找另一张照片请点击「＋ 新建对话」。")
     # 输入框
