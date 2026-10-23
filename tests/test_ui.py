@@ -322,6 +322,12 @@ class StreamlitInteractionTests(unittest.TestCase):
 
     def test_initial_browse_no_model_no_host_key_and_consent_gates_chat(self):
         app = self.app()
+        sidebar_captions = "\n".join(item.value for item in app.sidebar.caption)
+        self.assertIn("对话仅保留在当前会话", sidebar_captions)
+        self.assertIn("自定义相册和手动标签保存到当前浏览器", sidebar_captions)
+        self.assertIn("保存成功后刷新可恢复", sidebar_captions)
+        self.assertIn("清除网站数据、无痕模式或存储限制", sidebar_captions)
+        self.assertNotIn("对话、标签和相册仅在当前会话保存", sidebar_captions)
         self.backend.get_search_resources.assert_not_called()
         self.assertEqual(len(app.get("imgs")), min(12, len(self.backend.load_metadata())))
         self.assertEqual(app.text_input(key="visitor_deepseek_key").value, "")

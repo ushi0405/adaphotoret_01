@@ -367,7 +367,7 @@ def render_api_settings():
         st.button("清除密钥并撤回同意", on_click=clear_visitor_credentials,
                   width="stretch")
     st.sidebar.caption("本地模式：数据保存到本机。" if LOCAL_MODE else
-                       "公共演示：对话、标签和相册仅在当前会话保存，刷新或断开后可能丢失。")
+                       "公共演示：对话仅保留在当前会话；自定义相册和手动标签保存到当前浏览器，保存成功后刷新可恢复。清除网站数据、无痕模式或存储限制可能导致丢失，请导出备份。")
     st.sidebar.caption(f"当前照片库已加载 {len(image_paths)} 张照片。")
 
 
